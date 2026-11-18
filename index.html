@@ -450,7 +450,7 @@ function applyProgram(p,cfg){
   for(const d in C.overrides)if(d>=todayISO())delete C.overrides[d];
 }
 function defaultConfig(){
-  const c={v:1,name:'Matías',goal:'grasa',goalWeight:null,waterGoal:3,sleepGoal:8,restSec:90,startDate:todayISO(),schedule:{},overrides:{},customEx:[],routines:{},program:null};
+  const c={v:1,name:'',onboarded:false,goal:'grasa',goalWeight:null,waterGoal:3,sleepGoal:8,restSec:90,startDate:todayISO(),schedule:{},overrides:{},customEx:[],routines:{},program:null};
   const p=PROGRAMS[0];Object.assign(c.routines,programRoutines(p));c.schedule=programSchedule(p);c.restSec=p.rest;c.program=p.id;return c;
 }
 function freshState(){return {config:defaultConfig(),body:{entries:{}},sessions:{},savedAt:0}}
@@ -585,6 +585,7 @@ function kpi(c,ic,v,l,x=''){return `<div class="kpi" style="--c:${c}"><span clas
 function vHome(){
   const t=todayISO(),C=S.config,st=streakInfo();const rid=routineFor(t),R=rid&&C.routines[rid],tst=statusOf(t);const draft=loadDraft();
   let h=`<div style="margin-top:14px"><div class="muted small" style="text-transform:capitalize">${fmtLong(t)}</div><h1>Hola${C.name?', '+esc(C.name):''}</h1></div>`;
+  if(!C.name&&!C.onboarded&&!doneSessions().length)h+=`<div class="card" style="border-color:var(--ac)"><h2>Bienvenido a ZevFit 💪</h2><div class="small muted" style="margin:6px 0 4px">Contanos dos cosas y te armamos la rutina.</div><label class="f"><span>¿Cómo te llamás?</span><input class="in" id="obName" placeholder="Tu nombre"></label><div class="small" style="font-weight:600;color:var(--mu);margin-bottom:6px">¿Cuál es tu objetivo?</div><div class="grid2" style="margin:0">${Object.entries(GOALS).map(([k,g])=>`<button class="btn ob-goal ${C.goal===k?'pri':''}" data-a="obGoal" data-g="${k}">${g.label}</button>`).join('')}</div><button class="btn pri wide" style="margin-top:12px" data-a="obStart">Elegir mi rutina →</button></div>`;
   if(draft)h+=`<div class="card resume" data-a="resume">▶ Tenés un entreno en curso (${esc((C.routines[draft.routineId]||{}).name||'')}) · tocá para seguir</div>`;
   h+=`<div class="card"><div class="streak"><div class="grow"><div class="big">${st.cur}</div><div class="small" style="font-weight:600">entrenos seguidos</div><div class="tiny muted" style="margin-top:2px">sin saltear días planificados</div><div style="margin-top:10px"><span class="chip">Récord: ${st.best}</span></div></div><div>${heatmap()}<div class="tiny muted" style="margin-top:6px;text-align:right">últimas 4 semanas</div></div></div></div>`;
   // hoy
@@ -1077,6 +1078,8 @@ const A={
   newRoutine:()=>{const ids=Object.keys(S.config.routines);let id='R'+Date.now().toString(36);const n=ids.length+1;S.config.routines[id]={id,name:'Rutina '+n,short:'R'+n,color:PALETTE[n%PALETTE.length],ex:[]};markDirty('config');Sheet._keep=true;sheetEditor();setTimeout(()=>{$('#sheetBody').scrollTop=1e6},50)},
   delRoutine:a=>twoTap(a,'¿Eliminar?',()=>{const id=a.dataset.r;const used=Object.values(S.sessions).some(s=>s.routineId===id);if(used){toast('Tiene entrenos registrados: no se puede borrar');return}delete S.config.routines[id];for(const k in S.config.schedule)if(S.config.schedule[k]===id)delete S.config.schedule[k];for(const k in S.config.overrides)if(S.config.overrides[k]===id)delete S.config.overrides[k];markDirty('config');Sheet._keep=true;sheetEditor()}),
   programs:()=>sheetPrograms(),
+  obGoal:a=>{S.config.goal=a.dataset.g;document.querySelectorAll('.ob-goal').forEach(b=>b.classList.toggle('pri',b===a))},
+  obStart:()=>{const n=($('#obName').value||'').trim();if(!n){toast('Escribí tu nombre');return}S.config.name=n;S.config.onboarded=true;UI.progGoal=S.config.goal;markDirty('config');render();sheetPrograms()},
   progGoal:a=>{UI.progGoal=a.dataset.g;sheetPrograms()},
   progView:a=>{Sheet.progId=a.dataset.id;sheetProgram(a.dataset.id)},
   progUse:a=>twoTap(a,'Reemplaza tus rutinas · tocá otra vez',()=>{const p=PROGRAMS.find(x=>x.id===a.dataset.id);applyProgram(p);markDirty('config');UI.sel=todayISO();closeSheet();UI.view='routines';render();toast('Programa activado: '+p.name)}),
