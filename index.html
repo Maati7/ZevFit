@@ -554,7 +554,7 @@ function bodyAvg(field,from,to){let s=0,n=0;for(const d in S.body.entries)if(d>=
 function nextSession(from){for(let i=1;i<=14;i++){const d=addDays(from,i);const r=routineFor(d);if(r)return {d,r}}return null}
 
 /* ================= UI estado ================= */
-const UI={view:'home',sel:todayISO(),cal:todayISO().slice(0,8)+'01',libQ:'',libPick:null};
+const UI={view:'home',sel:todayISO(),cal:todayISO().slice(0,8)+'01',libQ:'',libPick:null,libRep:null,altSave:true};
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2200)}
 const ICON={
   fire:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.4-.5-2-1-3-1.1-2.1-.2-4 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.2.4-2.3 1-3.3.3 1.6 1.2 2.8 2.5 2.8z"/></svg>',
@@ -629,10 +629,11 @@ function vRoutines(){
   const ov=C.overrides[d];const planR=C.schedule[parse(d).getDay()];
   h+=`<label class="f" style="margin:10px 0 4px"><span>Rutina del día</span><select class="in" data-c="dayRoutine" ${s&&s.status==='done'?'disabled':''}><option value="__plan" ${ov===undefined?'selected':''}>Según el plan (${planR&&C.routines[planR]?esc(C.routines[planR].name):'descanso'})</option>${Object.values(C.routines).map(r=>`<option value="${r.id}" ${ov===r.id?'selected':''}>${esc(r.name)}</option>`).join('')}<option value="rest" ${ov==='rest'?'selected':''}>Descanso</option></select></label>`;
   if(R){
-    const rs=routineStats(R);
+    const dl=s&&s.status==='done'&&s.sets?Object.keys(s.sets).map(id=>{const w=s.sets[id].filter(x=>!x.warm);return {id,sets:w.length,reps:(w[0]||{}).r||''}}):R.ex;
+    const rs=routineStats({ex:dl});
     h+=`<div class="grid3" style="margin-top:10px"><div class="tile"><b>${rs.n}</b><span>ejercicios</span></div><div class="tile"><b>${rs.sets}</b><span>series totales</span></div><div class="tile"><b>~${rs.min}</b><span>min estimados</span></div></div>`;
     h+=`<div class="tiny muted" style="margin-top:14px;letter-spacing:1px;font-weight:600">MÚSCULOS DEL DÍA</div>`;
-    const groups={};for(const e of R.ex){const m=exInfo(e.id).muscle;(groups[m]=groups[m]||[]).push(e)}
+    const groups={};for(const e of dl){const m=exInfo(e.id).muscle;(groups[m]=groups[m]||[]).push(e)}
     for(const m of Object.keys(MUSCLES).concat(Object.keys(groups).filter(x=>!MUSCLES[x]))){const g=groups[m];if(!g)continue;const c=MUSCLES[m]||'#8b92a0';
       h+=`<div class="grp" style="--c:${c}"><div class="grp-h"><div class="gic">${ICON.dumb}</div><div class="grow"><b>${m}</b><div class="tiny muted">${g.length} ejercicio${g.length>1?'s':''} · ${g.reduce((a,e)=>a+(+e.sets||0),0)} series</div></div></div>`;
       for(const e of g){const ex=exInfo(e.id);const hist=exHistory(e.id);const last=hist.length?hist[hist.length-1]:null;
@@ -776,13 +777,14 @@ function sheetRest(){Sheet.kind='rest';openSheet('Descanso',`<div class="muted s
 function sheetLib(){
   Sheet.kind='lib';
   const pick=UI.libPick;
-  openSheet(pick?'Agregar a '+(S.config.routines[pick]||{}).name:'Biblioteca',`<input class="in" data-i="libq" placeholder="Buscar ejercicio…" value="${esc(UI.libQ)}" style="margin-top:12px"><div id="libList"></div>
+  openSheet(pick?(UI.libRep!=null?'Reemplazar '+exInfo((S.config.routines[pick].ex[UI.libRep]||{}).id).name:'Agregar a '+(S.config.routines[pick]||{}).name):'Biblioteca',`<input class="in" data-i="libq" placeholder="Buscar ejercicio…" value="${esc(UI.libQ)}" style="margin-top:12px"><div id="libList"></div>
   <div class="card" style="margin-top:16px"><h3>Crear ejercicio</h3><div class="row" style="margin-top:10px"><input class="in grow" id="newExName" placeholder="Nombre"><select class="in" id="newExMuscle" style="width:120px">${Object.keys(MUSCLES).map(m=>`<option>${m}</option>`).join('')}</select></div><button class="btn wide" style="margin-top:8px" data-a="newEx">Crear</button></div>`);
   renderLibList();
 }
 function renderLibList(){
   const q=slug(UI.libQ||'');const all=Object.values(exMap()).filter(e=>!q||slug(e.name).includes(q));
-  let h='';for(const m of Object.keys(MUSCLES)){const g=all.filter(e=>e.muscle===m);if(!g.length)continue;h+=`<div class="tiny muted" style="margin:16px 0 2px;letter-spacing:1px;font-weight:700;color:${MUSCLES[m]}">${m.toUpperCase()}</div>`;
+  let h='';if(UI.libPick&&UI.libPick!=='__wk'&&UI.libRep!=null&&!q){const R=S.config.routines[UI.libPick];const old=R&&R.ex[UI.libRep];if(old){const alts=alternatives(old.id,R.ex.map(e=>e.id)).slice(0,6);if(alts.length){h+=`<div class="tiny" style="margin:16px 0 2px;letter-spacing:1px;font-weight:700;color:var(--ac)">SUGERIDOS (MISMOS MÚSCULOS)</div>`;for(const e of alts)h+=`<button class="lib-i" data-a="pickEx" data-id="${e.id}">${anim(e.id,'sm')}<span class="grow">${esc(e.name)}</span><span class="muted">⇄</span></button>`}}}
+  for(const m of Object.keys(MUSCLES)){const g=all.filter(e=>e.muscle===m);if(!g.length)continue;h+=`<div class="tiny muted" style="margin:16px 0 2px;letter-spacing:1px;font-weight:700;color:${MUSCLES[m]}">${m.toUpperCase()}</div>`;
     for(const e of g)h+=`<button class="lib-i" data-a="${UI.libPick?'pickEx':'exInfo'}" data-id="${e.id}">${anim(e.id,'sm')||`<span class="mdot" style="background:${MUSCLES[m]}"></span>`}<span class="grow">${esc(e.name)}</span><span class="muted">${UI.libPick?'+':'›'}</span></button>`}
   $('#libList').innerHTML=h||'<div class="empty small">No encontré ese ejercicio. Crealo abajo.</div>';
 }
@@ -806,7 +808,7 @@ function sheetEditor(){
   for(const R of Object.values(C.routines)){
     b+=`<div class="card" style="border-left:3px solid ${R.color}"><div class="row"><input class="in grow" data-i="rname" data-r="${R.id}" value="${esc(R.name)}"><input class="in" style="width:70px;text-align:center" maxlength="4" data-i="rshort" data-r="${R.id}" value="${esc(R.short)}" title="Sigla del calendario"></div>
     <div class="row" style="margin:10px 0;gap:6px">${PALETTE.map(c=>`<button class="sw ${c===R.color?'on':''}" style="background:${c}" data-a="rcolor" data-r="${R.id}" data-c="${c}" aria-label="color"></button>`).join('')}</div>`;
-    R.ex.forEach((e,i)=>{const ex=exInfo(e.id);b+=`<div class="row" style="padding:8px 0;border-top:1px solid var(--bd);gap:6px"><span class="mdot" style="background:${MUSCLES[ex.muscle]}"></span><div class="grow small" style="font-weight:600">${esc(ex.name)}</div><input class="in" style="width:44px;padding:7px 4px;text-align:center" inputmode="numeric" data-i="esets" data-r="${R.id}" data-x="${i}" value="${e.sets}" title="Series"><span class="muted small">×</span><input class="in" style="width:48px;padding:7px 4px;text-align:center" inputmode="numeric" data-i="ereps" data-r="${R.id}" data-x="${i}" value="${e.reps}" title="${ex.time?'Segundos':'Reps'}"><button class="btn sm ghost" data-a="emove" data-r="${R.id}" data-x="${i}" data-d="-1">↑</button><button class="btn sm ghost" data-a="edel" data-r="${R.id}" data-x="${i}" style="color:var(--rd)">✕</button></div>`});
+    R.ex.forEach((e,i)=>{const ex=exInfo(e.id);b+=`<div class="row" style="padding:8px 0;border-top:1px solid var(--bd);gap:6px"><span class="mdot" style="background:${MUSCLES[ex.muscle]}"></span><div class="grow small" style="font-weight:600">${esc(ex.name)}</div><input class="in" style="width:44px;padding:7px 4px;text-align:center" inputmode="numeric" data-i="esets" data-r="${R.id}" data-x="${i}" value="${e.sets}" title="Series"><span class="muted small">×</span><input class="in" style="width:48px;padding:7px 4px;text-align:center" inputmode="numeric" data-i="ereps" data-r="${R.id}" data-x="${i}" value="${e.reps}" title="${ex.time?'Segundos':'Reps'}"><button class="btn sm ghost" data-a="erep" data-r="${R.id}" data-x="${i}" style="color:var(--bl)" title="Reemplazar">⇄</button><button class="btn sm ghost" data-a="emove" data-r="${R.id}" data-x="${i}" data-d="-1">↑</button><button class="btn sm ghost" data-a="edel" data-r="${R.id}" data-x="${i}" style="color:var(--rd)">✕</button></div>`});
     b+=`<div class="row" style="margin-top:10px"><button class="btn sm grow" data-a="addEx" data-r="${R.id}">+ Agregar ejercicio</button><button class="btn sm danger" data-a="delRoutine" data-r="${R.id}">Eliminar rutina</button></div></div>`;
   }
   b+=`<button class="btn wide" data-a="newRoutine">+ Nueva rutina</button>`;
@@ -967,7 +969,7 @@ function openWorkout(date){
     if(draft&&!Sheet._replaceOk){Sheet._pending=date;openSheet('Entreno en curso',`<div class="small muted" style="margin:12px 0">Tenés un entreno sin terminar del ${fmtShort(draft.date)}. ¿Qué hacemos?</div>`,{foot:`<button class="btn grow" data-a="resume">Seguir ese</button><button class="btn danger grow" data-a="replaceDraft">Descartarlo</button>`});return}
     Sheet._replaceOk=false;
     const rid=routineFor(date);if(!rid)return;const R=S.config.routines[rid];const s=S.sessions[date];
-    const ex=R.ex.map(e=>{const prev=s&&s.sets&&s.sets[e.id];if(prev)return {id:e.id,target:e.reps,sets:prev.map(x=>({...x}))};
+    const done=s&&s.status==='done'&&s.sets;const ex=done?Object.keys(s.sets).map(id=>{const re=R.ex.find(e=>e.id===id);return {id,target:re?re.reps:'',sets:s.sets[id].map(x=>({...x}))}}):R.ex.map(e=>{const prev=s&&s.sets&&s.sets[e.id];if(prev)return {id:e.id,target:e.reps,sets:prev.map(x=>({...x}))};
       const last=lastSetsFor(e.id,date);return {id:e.id,target:e.reps,sets:Array.from({length:+e.sets||3},(_,i)=>({w:last?(last[i]||last[last.length-1]).w:'',r:e.reps,done:false}))}});
     if(s&&s.sets)for(const id in s.sets)if(!ex.find(x=>x.id===id))ex.push({id,target:'',sets:s.sets[id].map(x=>({...x}))});
     Wk.W={date,routineId:rid,start:Date.now(),edit:!!(s&&s.status==='done'),dur:s&&s.dur,ex};saveDraft();
@@ -1032,7 +1034,7 @@ function replaceState(n){const old=new Set(['config','body',...Store.known,...Ob
 function twoTap(el,label,fn){if(el.dataset.armed){fn();return}el.dataset.armed='1';const o=el.innerHTML;el.innerHTML=label;el.classList.add('armed');setTimeout(()=>{if(el.isConnected){delete el.dataset.armed;el.innerHTML=o;el.classList.remove('armed')}},3000)}
 const A={
   nav:a=>{UI.view=a.dataset.v;window.scrollTo(0,0);render()},
-  closeSheet:()=>{if(Sheet.kind==='lib'&&UI.libPick){UI.libPick=null;sheetEditor();return}closeSheet()},
+  closeSheet:()=>{if(Sheet.kind==='lib'&&UI.libPick){UI.libPick=null;UI.libRep=null;sheetEditor();return}closeSheet()},
   selDay:a=>{UI.sel=a.dataset.d;UI.cal=UI.sel.slice(0,8)+'01';render()},
   wkShift:a=>{UI.sel=addDays(UI.sel,+a.dataset.d);UI.cal=UI.sel.slice(0,8)+'01';render()},
   calShift:a=>{const d=parse(UI.cal);d.setMonth(d.getMonth()+(+a.dataset.d));UI.cal=iso(d);render()},
@@ -1070,13 +1072,14 @@ const A={
   lib:()=>{UI.libPick=null;UI.libQ='';sheetLib()},
   exInfo:a=>{const fromProg=Sheet.kind==='prog';sheetExInfo(a.dataset.id);if(fromProg)Sheet.back='prog'},
   editor:()=>sheetEditor(),
-  addEx:a=>{UI.libPick=a.dataset.r;UI.libQ='';sheetLib()},
+  addEx:a=>{UI.libRep=null;UI.libPick=a.dataset.r;UI.libQ='';sheetLib()},
   pickEx:a=>{const id=a.dataset.id;const ex=exInfo(id);
     if(UI.libPick==='__wk'){UI.libPick=null;const dr=ex.unit==='min'&&ex.time?20:ex.time?30:10;Wk.W.ex.push({id,target:dr,sets:(ex.unit==='min'&&ex.time?[0]:[0,1,2]).map(()=>({w:'',r:dr,done:false}))});saveDraft();const W=Wk.W;Sheet._replaceOk=false;openWorkout(W.date);toast('Agregado');return}
-    const R=S.config.routines[UI.libPick];if(!R)return;R.ex.push({id,sets:ex.time&&ex.unit==='min'?1:3,reps:ex.time&&ex.unit==='min'?20:ex.time?30:10});markDirty('config');UI.libPick=null;toast(ex.name+' agregado');sheetEditor()},
+    const R=S.config.routines[UI.libPick];if(!R)return;if(UI.libRep!=null&&R.ex[UI.libRep]){const old=exInfo(R.ex[UI.libRep].id).name;R.ex[UI.libRep].id=id;if(ex.time!==exInfo(id).time){}UI.libRep=null;UI.libPick=null;markDirty('config');toast(old+' → '+ex.name);Sheet._keep=true;sheetEditor();return}R.ex.push({id,sets:ex.time&&ex.unit==='min'?1:3,reps:ex.time&&ex.unit==='min'?20:ex.time?30:10});markDirty('config');UI.libPick=null;toast(ex.name+' agregado');sheetEditor()},
   newEx:()=>{const n=$('#newExName').value.trim();if(!n){toast('Escribí un nombre');return}const id='c-'+slug(n);if(exMap()[id]){toast('Ya existe');return}S.config.customEx.push({id,name:n,muscle:$('#newExMuscle').value});markDirty('config');$('#newExName').value='';renderLibList();toast('Ejercicio creado')},
   rcolor:a=>{S.config.routines[a.dataset.r].color=a.dataset.c;markDirty('config');Sheet._keep=true;sheetEditor()},
   emove:a=>{const R=S.config.routines[a.dataset.r];const i=+a.dataset.x;if(i<=0)return;[R.ex[i-1],R.ex[i]]=[R.ex[i],R.ex[i-1]];markDirty('config');Sheet._keep=true;sheetEditor()},
+  erep:a=>{UI.libPick=a.dataset.r;UI.libRep=+a.dataset.x;UI.libQ='';sheetLib()},
   edel:a=>{const R=S.config.routines[a.dataset.r];R.ex.splice(+a.dataset.x,1);markDirty('config');Sheet._keep=true;sheetEditor()},
   newRoutine:()=>{const ids=Object.keys(S.config.routines);let id='R'+Date.now().toString(36);const n=ids.length+1;S.config.routines[id]={id,name:'Rutina '+n,short:'R'+n,color:PALETTE[n%PALETTE.length],ex:[]};markDirty('config');Sheet._keep=true;sheetEditor();setTimeout(()=>{$('#sheetBody').scrollTop=1e6},50)},
   delRoutine:a=>twoTap(a,'¿Eliminar?',()=>{const id=a.dataset.r;const used=Object.values(S.sessions).some(s=>s.routineId===id);if(used){toast('Tiene entrenos registrados: no se puede borrar');return}delete S.config.routines[id];for(const k in S.config.schedule)if(S.config.schedule[k]===id)delete S.config.schedule[k];for(const k in S.config.overrides)if(S.config.overrides[k]===id)delete S.config.overrides[k];markDirty('config');Sheet._keep=true;sheetEditor()}),
