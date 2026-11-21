@@ -7,6 +7,7 @@ App web de entrenamiento de un solo archivo (`index.html`), pensada para usar de
 - **Rutinas:** calendario semanal y mensual, registro de series con temporizador de descanso, series de calentamiento y botón para cambiar un ejercicio por una alternativa.
 - **Programas:** rutinas armadas según el objetivo (perder grasa, ganar músculo, fuerza, empezar de cero) y código para compartir tu semana.
 - **Progreso:** mapa muscular (recuperación y volumen), radar "Atleta 360°", volumen semanal, peso, sueño y 1RM estimado.
+- **Nutrición:** calorías y proteína según objetivo, contador de proteína con comidas típicas, chequeo semanal del peso e ideas de comidas.
 - **Biblioteca:** 85 ejercicios con animación y clave de técnica en español.
 
 ## Datos

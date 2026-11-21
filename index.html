@@ -40,7 +40,7 @@ header .wrap{display:flex;align-items:center;gap:10px;height:56px}
 
 /* nav */
 nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(17,19,24,.96);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom)}
-nav .wrap{display:grid;grid-template-columns:repeat(4,1fr);height:64px}
+nav .wrap{display:grid;grid-template-columns:repeat(5,1fr);height:64px}
 nav button{background:none;border:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--mu2);font-size:10.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;position:relative}
 nav button.on{color:var(--ac)}
 nav button.on::before{content:"";position:absolute;top:0;width:28px;height:3px;border-radius:0 0 3px 3px;background:var(--ac)}
@@ -201,6 +201,7 @@ a{color:var(--bl)}
   <button data-a="nav" data-v="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>Inicio</button>
   <button data-a="nav" data-v="routines"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/></svg>Rutinas</button>
   <button data-a="nav" data-v="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>Progreso</button>
+  <button data-a="nav" data-v="nutrition"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 2v8a2 2 0 0 0 2 2v10M11 2v8a2 2 0 0 1-2 2M9 2v6M17 22V2c-2 1-3 4-3 7s1 4 3 4"/></svg>Comida</button>
   <button data-a="nav" data-v="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Ajustes</button>
 </div></nav>
 
@@ -453,7 +454,7 @@ function applyProgram(p,cfg){
   for(const d in C.overrides)if(d>=todayISO())delete C.overrides[d];
 }
 function defaultConfig(){
-  const c={v:1,name:'',onboarded:false,goal:'grasa',goalWeight:null,waterGoal:3,sleepGoal:8,restSec:90,startDate:todayISO(),schedule:{},overrides:{},customEx:[],routines:{},program:null};
+  const c={v:1,name:'',onboarded:false,profile:{sex:'',age:'',height:'',act:1.55},goal:'grasa',goalWeight:null,waterGoal:3,sleepGoal:8,restSec:90,startDate:todayISO(),schedule:{},overrides:{},customEx:[],routines:{},program:null};
   const p=PROGRAMS[0];Object.assign(c.routines,programRoutines(p));c.schedule=programSchedule(p);c.restSec=p.rest;c.program=p.id;return c;
 }
 function freshState(){return {config:defaultConfig(),body:{entries:{}},sessions:{},savedAt:0}}
@@ -466,7 +467,7 @@ function loadLocal(){try{const t=localStorage.getItem(LS_KEY);if(t){const o=JSON
 function normalize(o){
   const d=freshState();
   const c=Object.assign(d.config,o.config||{});
-  c.routines=c.routines||{};c.schedule=c.schedule||{};c.overrides=c.overrides||{};c.customEx=c.customEx||[];
+  c.routines=c.routines||{};c.profile=c.profile||{sex:'',age:'',height:'',act:1.55};c.schedule=c.schedule||{};c.overrides=c.overrides||{};c.customEx=c.customEx||[];
   return {config:c,body:{entries:(o.body&&o.body.entries)||{}},sessions:o.sessions||{},savedAt:o.savedAt||0};
 }
 
@@ -573,8 +574,8 @@ const ICON={
 /* ================= vistas ================= */
 function render(){
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===UI.view));
-  $('#vt').textContent={home:'Inicio',routines:'Rutinas',progress:'Progreso',settings:'Ajustes'}[UI.view];
-  const fn={home:vHome,routines:vRoutines,progress:vProgress,settings:vSettings}[UI.view];
+  $('#vt').textContent={home:'Inicio',routines:'Rutinas',progress:'Progreso',nutrition:'Nutrición',settings:'Ajustes'}[UI.view];
+  const fn={home:vHome,routines:vRoutines,progress:vProgress,nutrition:vNutrition,settings:vSettings}[UI.view];
   $('#app').innerHTML=fn();
 }
 
@@ -608,7 +609,7 @@ function vHome(){
   h+=`<div class="kpi" style="--c:#4da3ff"><span class="ic">${ICON.drop}</span><div class="l">Agua hoy</div><div class="v">${fmtN(water)}<small style="font-size:16px"> / ${fmtN(C.waterGoal)} L</small></div><div class="row" style="gap:6px;margin-top:6px"><button class="btn sm" data-a="water" data-d="-0.25">−</button><button class="btn sm grow" data-a="water" data-d="0.25" style="color:var(--bl)">+250 ml</button></div></div>`;
   h+=kpi('#ff8a3d',ICON.cal,adh.pct==null?'—':adh.pct+'%','Constancia',`<span class="muted">${adh.d}/${adh.p} entrenos · 28 días</span>`);
   h+=kpi('#ff6fb5',ICON.bolt,fmtVol(wk.v),'Volumen semana',pw.v?`<span style="color:${wk.v>=pw.v?'var(--ac)':'var(--mu)'}">${wk.v>=pw.v?'↗':'↘'} ${Math.round(Math.abs(wk.v-pw.v)/pw.v*100)}%</span> <span class="muted">vs anterior</span>`:'<span class="muted">esta semana</span>');
-  h+=kpi('#ffd23f',ICON.fire,month,'Entrenos del mes',`<span class="muted" style="text-transform:capitalize">${MON[parse(t).getMonth()]}</span>`);
+  {const NT=nutriTargets();const pr=protOf(t);h+=`<div class="kpi" style="--c:#ffd23f;cursor:pointer" data-a="nav" data-v="nutrition"><span class="ic">${ICON.fire}</span><div class="l">Proteína hoy</div><div class="v">${pr}<small style="font-size:16px"> ${NT?'/ '+NT.prot+' g':'g'}</small></div><div class="x">${NT?`<span style="color:${pr>=NT.prot*.9?'var(--ac)':'var(--mu)'}">${pr>=NT.prot*.9?'✓ cumplida':'Faltan '+Math.max(0,NT.prot-pr)+' g'}</span>`:'<span class="muted">Configurala en Comida</span>'}</div></div>`}
   h+='</div>';
   h+=`<button class="btn wide" data-a="bodyLog">+ Registrar peso y sueño</button>`;
   if(!doneSessions().length&&!Object.keys(S.body.entries).length)h+=`<div class="card flat empty"><div style="font-weight:600;color:var(--tx)">Todavía no hay datos</div><div class="small" style="margin:6px 0 12px">Elegí un programa según tu objetivo y registrá tu primer entreno. También podés cargar datos de ejemplo para ver los gráficos.</div><div class="row" style="justify-content:center;gap:8px"><button class="btn sm pri" data-a="programs">Ver programas</button><button class="btn sm" data-a="demo">Datos de ejemplo</button></div></div>`;
@@ -703,7 +704,8 @@ function scores(ref){
   const wa=bodyAvg('water',addDays(ref,-6),ref);const hid=wa==null?0:clamp(wa/C.waterGoal*100);
   let pes=0;const ds=Object.keys(S.body.entries).filter(d=>S.body.entries[d].w&&d<=ref).sort();
   if(C.goalWeight&&ds.length){const st=num(S.body.entries[ds[0]].w),cu=num(S.body.entries[ds[ds.length-1]].w),g=num(C.goalWeight);pes=st===g?100:clamp((st-cu)/(st-g)*100)}
-  return [fuer,vol,cons,sue,hid,pes].map(Math.round);
+  const nu=(()=>{const T=nutriTargets();if(!T)return 0;let n=0,ok=0;for(let d=addDays(ref,-6);d<=ref;d=addDays(d,1)){n++;if(protOf(d)>=T.prot*.9)ok++}return ok/n*100})();
+  return [fuer,vol,cons,sue,hid,pes,nu].map(Math.round);
 }
 
 function vProgress(){
@@ -712,8 +714,8 @@ function vProgress(){
   let h=`<h1 style="margin-top:14px">Progreso</h1><div class="muted small">Cómo venís, con números</div>`+muscleCard();
   h+=`<div class="grid3" style="margin-top:12px"><div class="tile"><b>${ds.length}</b><span>entrenos</span></div><div class="tile"><b>${fmtVol(tot)}</b><span>volumen total</span></div><div class="tile"><b>${st.best}</b><span>mejor racha</span></div></div>`;
   // radar
-  const axes=['Fuerza','Volumen','Constancia','Sueño','Hidratación','Peso'];const cur=scores(t),prev=scores(addDays(t,-30));
-  h+=`<div class="card"><div class="row between"><h3>Atleta 360°</h3><span class="tiny muted">0–100</span></div>${radarSVG(axes,cur,prev)}<div class="legend" style="justify-content:center;margin-top:0"><span><span class="mdot" style="background:var(--ac)"></span> Actual</span><span><span class="mdot" style="background:#5d6472"></span> Hace 30 días</span></div><div class="grid3" style="margin-top:10px">${axes.map((a,i)=>`<div class="tile" style="padding:8px"><b style="font-size:18px">${cur[i]}</b><span>${a} ${cur[i]>prev[i]?'<span style="color:var(--ac)">↗</span>':cur[i]<prev[i]?'<span style="color:var(--rd)">↘</span>':''}</span></div>`).join('')}</div><details style="margin-top:10px"><summary class="small muted">¿Cómo se calcula?</summary><div class="small muted" style="margin-top:6px;line-height:1.5"><b>Fuerza:</b> 1RM estimado de las últimas 2 semanas vs. el mes anterior (50 = igual, 100 = +10%).<br><b>Volumen:</b> kg de la última semana vs. tu promedio de 4 semanas (60 = igual).<br><b>Constancia:</b> % de entrenos planificados que hiciste en 28 días.<br><b>Sueño / Hidratación:</b> promedio de 7 días vs. tu objetivo.<br><b>Peso:</b> avance desde tu primer registro hacia el peso objetivo${C.goalWeight?'':' (configuralo en Ajustes)'}.</div></details></div>`;
+  const axes=['Fuerza','Volumen','Constancia','Sueño','Hidratación','Peso','Nutrición'];const cur=scores(t),prev=scores(addDays(t,-30));
+  h+=`<div class="card"><div class="row between"><h3>Atleta 360°</h3><span class="tiny muted">0–100</span></div>${radarSVG(axes,cur,prev)}<div class="legend" style="justify-content:center;margin-top:0"><span><span class="mdot" style="background:var(--ac)"></span> Actual</span><span><span class="mdot" style="background:#5d6472"></span> Hace 30 días</span></div><div class="grid3" style="margin-top:10px">${axes.map((a,i)=>`<div class="tile" style="padding:8px"><b style="font-size:18px">${cur[i]}</b><span>${a} ${cur[i]>prev[i]?'<span style="color:var(--ac)">↗</span>':cur[i]<prev[i]?'<span style="color:var(--rd)">↘</span>':''}</span></div>`).join('')}</div><details style="margin-top:10px"><summary class="small muted">¿Cómo se calcula?</summary><div class="small muted" style="margin-top:6px;line-height:1.5"><b>Fuerza:</b> 1RM estimado de las últimas 2 semanas vs. el mes anterior (50 = igual, 100 = +10%).<br><b>Volumen:</b> kg de la última semana vs. tu promedio de 4 semanas (60 = igual).<br><b>Constancia:</b> % de entrenos planificados que hiciste en 28 días.<br><b>Sueño / Hidratación:</b> promedio de 7 días vs. tu objetivo.<br><b>Peso:</b> avance desde tu primer registro hacia el peso objetivo${C.goalWeight?'':' (configuralo en Ajustes)'}.<br><b>Nutrición:</b> días de la última semana en que llegaste a tu proteína.</div></details></div>`;
   // volumen semanal
   const weeks=[];for(let k=7;k>=0;k--){const a=addDays(mondayOf(t),-7*k);const r=volBetween(a,addDays(a,6));weeks.push({label:fmtShort(a),v:r.v,n:r.n})}
   h+=`<div class="card"><h3>Volumen semanal</h3><div class="tiny muted" style="margin-bottom:6px">kg levantados (barras) y entrenos por semana (línea)</div>${barsSVG(weeks)}</div>`;
@@ -836,6 +838,65 @@ function sheetProgram(id){
 }
 function routineStatsRest(R,rest){const o=S.config.restSec;S.config.restSec=rest;const r=routineStats(R);S.config.restSec=o;return r}
 
+/* ================= nutrición ================= */
+const FOODS=[['2 huevos',12],['Pechuga de pollo (150 g)',35],['Carne vacuna (150 g)',32],['Milanesa de carne',28],['Merluza (150 g)',27],['Lata de atún',25],['Scoop de proteína',24],['Yogur alto en proteína',15],['Queso (50 g)',11],['Ricota (100 g)',11],['Vaso de leche',8],['Lentejas (plato)',18]];
+const ACTS=[[1.375,'Entreno 1–3 días, trabajo sentado'],[1.55,'Entreno 3–5 días o trabajo activo'],[1.725,'Entreno casi todos los días + deporte']];
+const MEALS={
+ grasa:[['Milanesa de pollo al horno con ensalada completa',38],['Tarta de atún con masa integral y ensalada',30],['Wok de pollo con verduras y una porción chica de arroz',40],['Omelette de 3 huevos con queso y tomate',26],['Yogur alto en proteína con fruta y avena',18],['Merluza al horno con puré de calabaza',30]],
+ musculo:[['Arroz con pollo y verduras (porción grande)',45],['Fideos con carne picada magra y salsa',40],['Sándwich de pan integral con huevo, jamón y queso',30],['Licuado: leche, banana, avena y un scoop',35],['Bife con papas al horno y ensalada',42],['Guiso de lentejas con carne',35]],
+ fuerza:[['Bife con arroz y huevo',45],['Pasta con pollo y queso rallado',42],['Licuado: leche, banana, avena y un scoop',35],['Tostadas con ricota, huevo y palta',25],['Pollo al horno con papas y batata',40],['Guiso de lentejas con carne',35]],
+ inicio:[['Pollo con arroz y ensalada',38],['Tortilla de papa con ensalada',22],['Yogur con frutas y granola',12],['Tarta de verdura con huevo',20],['Sándwich integral de pollo y queso',30],['Merluza con puré mixto',30]]
+};
+function nutriTargets(){
+  const C=S.config,P=C.profile||{};const wl=bodyLatest('w');const w=wl&&wl.v;
+  if(!P.sex||!(+P.age)||!(+P.height)||!w)return null;
+  const bmr=10*w+6.25*(+P.height)-5*(+P.age)+(P.sex==='m'?5:-161);const tdee=bmr*(+P.act||1.55);const g=C.goal||'grasa';
+  let kcal=g==='grasa'?tdee-Math.min(600,tdee*.2):g==='musculo'?tdee*1.1:g==='fuerza'?tdee*1.05:tdee;kcal=Math.round(kcal/50)*50;
+  const pf={grasa:2.0,musculo:1.8,fuerza:1.8,inicio:1.6}[g]||1.8;const prot=Math.round(w*pf/5)*5;const fat=Math.round(w*.9/5)*5;const carb=Math.max(0,Math.round((kcal-prot*4-fat*9)/4/5)*5);
+  return {w,tdee:Math.round(tdee/50)*50,kcal,prot,fat,carb,pf,g};
+}
+function foodsOf(d){const e=S.body.entries[d];return (e&&Array.isArray(e.food))?e.food:[]}
+function protOf(d){return foodsOf(d).reduce((a,f)=>a+(+f[1]||0),0)}
+function nutriAdherence(from,to){const T=nutriTargets();if(!T)return null;let n=0,ok=0;for(let d=from;d<=to;d=addDays(d,1)){n++;if(protOf(d)>=T.prot*.9)ok++}return Math.round(ok/n*100)}
+function weekCheck(){
+  const t=todayISO();const avg=(a,b)=>{let s=0,n=0;for(const d in S.body.entries)if(d>=a&&d<=b){const v=num(S.body.entries[d].w);if(v>0){s+=v;n++}}return n>=2?s/n:null};
+  const a=avg(addDays(t,-6),t),b=avg(addDays(t,-13),addDays(t,-7));
+  if(a==null||b==null)return {msg:'Registrá tu peso al menos 2 o 3 veces por semana (en ayunas, después del baño) y acá te digo si vas bien.',c:'var(--mu)'};
+  const r=(a-b)/b*100;const g=S.config.goal||'grasa';const txt=`Promedio esta semana ${fmtN(a)} kg vs ${fmtN(b)} kg (${r>0?'+':''}${fmtN(r)}%).`;
+  if(g==='grasa'){if(r>-0.25)return {msg:txt+' Casi no bajaste: restá ~150 kcal por día o sumá 10–15 min de cardio.',c:'var(--or)'};if(r<-1.2)return {msg:txt+' Estás bajando rápido y podés perder músculo: sumá ~150 kcal por día.',c:'var(--or)'};return {msg:txt+' Vas a buen ritmo (0,5–1% por semana). Seguí así.',c:'var(--ac)'}}
+  if(g==='musculo'||g==='fuerza'){if(r<0)return {msg:txt+' Estás bajando: sumá ~200 kcal por día.',c:'var(--or)'};if(r>0.6)return {msg:txt+' Subís rápido, probablemente sea grasa: restá ~150 kcal.',c:'var(--or)'};return {msg:txt+' Buen ritmo para ganar músculo sin sumar mucha grasa.',c:'var(--ac)'}}
+  if(Math.abs(r)>0.5)return {msg:txt+(r>0?' Estás subiendo: ajustá ~150 kcal hacia abajo.':' Estás bajando: sumá ~150 kcal.'),c:'var(--or)'};return {msg:txt+' Peso estable, perfecto para arrancar.',c:'var(--ac)'};
+}
+function vNutrition(){
+  const C=S.config,P=C.profile||{},t=todayISO();const T=nutriTargets();const g=C.goal||'grasa';
+  let h=`<h1 style="margin-top:14px">Nutrición</h1><div class="muted small">Objetivo: <b style="color:var(--tx)">${GOALS[g].label}</b> · se cambia en Ajustes</div>`;
+  if(!T||UI.nutEdit){const wl=bodyLatest('w');
+    h+=`<div class="card"><h3>${T?'Editar mis datos':'Calculá tus objetivos'}</h3><div class="small muted" style="margin:4px 0 8px">Con esto estimo cuántas calorías y cuánta proteína necesitás.</div>
+    <div class="small" style="font-weight:600;color:var(--mu)">Sexo</div><div class="row" style="gap:8px;margin:6px 0 2px"><button class="btn grow nsex ${P.sex==='m'?'pri':''}" data-a="nSex" data-s="m">Hombre</button><button class="btn grow nsex ${P.sex==='f'?'pri':''}" data-a="nSex" data-s="f">Mujer</button></div>
+    <div class="grid3" style="margin-top:4px"><label class="f" style="margin:8px 0"><span>Edad</span><input class="in" id="nAge" inputmode="numeric" value="${esc(P.age||'')}"></label><label class="f" style="margin:8px 0"><span>Altura (cm)</span><input class="in" id="nH" inputmode="numeric" value="${esc(P.height||'')}"></label><label class="f" style="margin:8px 0"><span>Peso (kg)</span><input class="in" id="nW" inputmode="decimal" value="${wl?wl.v:''}"></label></div>
+    <label class="f"><span>Actividad</span><select class="in" id="nAct">${ACTS.map(([v,l])=>`<option value="${v}" ${(+P.act||1.55)===v?'selected':''}>${l}</option>`).join('')}</select></label>
+    <button class="btn pri wide" data-a="nSave">Calcular</button>${T?'<button class="btn wide ghost" style="margin-top:6px" data-a="nCancel">Cancelar</button>':''}</div>`;
+    if(!T)return h+`<div class="tiny muted" style="text-align:center;margin:10px 0">Son estimaciones. Si tenés alguna condición de salud, consultá con un nutricionista.</div>`;
+  }
+  const kcalTxt={grasa:`déficit moderado (mantenimiento ~${T.tdee} kcal)`,musculo:`superávit chico, +10% (mantenimiento ~${T.tdee} kcal)`,fuerza:`leve superávit (mantenimiento ~${T.tdee} kcal)`,inicio:'mantenimiento'}[g];
+  h+=`<div class="card"><div class="row between"><h3>Tus objetivos diarios</h3><button class="btn sm" data-a="nEdit">Editar datos</button></div>
+  <div class="grid2" style="margin:10px 0 0"><div class="tile"><b>${T.kcal.toLocaleString('es-AR')}</b><span>kcal · ${kcalTxt}</span></div><div class="tile" style="border-color:rgba(200,241,53,.4)"><b style="color:var(--ac)">${T.prot} g</b><span>proteína · ${fmtN(T.pf)} g por kg</span></div><div class="tile"><b>${T.carb} g</b><span>carbohidratos</span></div><div class="tile"><b>${T.fat} g</b><span>grasas</span></div></div>
+  <div class="tiny muted" style="margin-top:8px">Calculado con ${fmtN(T.w)} kg. Se actualiza solo cuando registrás tu peso.</div></div>`;
+  const pr=protOf(t);const pct=Math.min(100,pr/T.prot*100);const fl=foodsOf(t);
+  h+=`<div class="card"><div class="row between"><h3>Proteína de hoy</h3><b class="cond" style="font-size:22px;color:${pr>=T.prot*.9?'var(--ac)':'var(--tx)'}">${pr} <span class="muted" style="font-size:15px">/ ${T.prot} g</span></b></div>
+  <div style="height:10px;background:var(--s3);border-radius:6px;margin:10px 0 4px;overflow:hidden"><i style="display:block;height:100%;width:${pct}%;background:var(--ac);border-radius:6px"></i></div>
+  <div class="tiny muted">${pr>=T.prot*.9?'¡Objetivo cumplido! 💪':`Te faltan ${Math.max(0,T.prot-pr)} g · ideal repartido en 3–5 comidas de 20–40 g`}</div>
+  ${fl.length?`<div style="margin-top:10px">${fl.map((f,i)=>`<div class="row" style="padding:6px 0;border-top:1px solid var(--bd)"><span class="grow small">${esc(f[0])}</span><span class="pill">${f[1]} g</span><button class="btn sm ghost" style="color:var(--rd)" data-a="foodDel" data-x="${i}">✕</button></div>`).join('')}</div>`:''}
+  <div class="tiny muted" style="margin:12px 0 6px;letter-spacing:1px;font-weight:600">SUMAR RÁPIDO</div><div class="row wrapf" style="gap:6px">${FOODS.map((f,i)=>`<button class="chip" style="border:0;padding:6px 10px" data-a="food" data-i="${i}">+ ${esc(f[0])} · ${f[1]}g</button>`).join('')}</div>
+  <div class="row" style="margin-top:10px;gap:6px"><input class="in grow" id="fName" placeholder="Otra comida"><input class="in" id="fP" inputmode="numeric" placeholder="g prot" style="width:76px"><button class="btn sm pri" data-a="foodCustom">+</button></div></div>`;
+  const wc=weekCheck();
+  h+=`<div class="card"><h3>Chequeo semanal</h3><div class="small" style="margin-top:6px;color:${wc.c};line-height:1.5">${wc.msg}</div><button class="btn sm" style="margin-top:10px" data-a="bodyLog">+ Registrar peso</button></div>`;
+  h+=`<div class="card"><h3>Ideas de comidas</h3><div class="tiny muted" style="margin-bottom:6px">Para ${GOALS[g].label.toLowerCase()}, con proteína aproximada por plato</div>${(MEALS[g]||MEALS.inicio).map(([n,p])=>`<div class="row" style="padding:8px 0;border-top:1px solid var(--bd)"><span class="grow small">${n}</span><span class="pill">~${p} g</span><button class="btn sm ghost" data-a="mealAdd" data-n="${esc(n)}" data-p="${p}">+</button></div>`).join('')}</div>`;
+  h+=`<div class="tiny muted" style="text-align:center;margin:10px 0 18px">Son estimaciones generales. Si tenés alguna condición de salud, consultá con un nutricionista.</div>`;
+  return h;
+}
+
+function addFood(n,p){const t=todayISO();const e=S.body.entries[t]=S.body.entries[t]||{};(e.food=e.food||[]).push([n,p]);markDirty('body');render();toast('+'+p+' g de proteína')}
 /* ================= mapa muscular ================= */
 const MM={"prensa-de-piernas":[["cuadriceps"],["gemelos","gluteos","isquios"]],"sentadilla-hack":[["cuadriceps"],["gemelos","gluteos","isquios"]],"extension-de-cuadriceps":[["cuadriceps"],[]],"curl-femoral-acostado":[["isquios"],[]],"curl-femoral-sentado":[["isquios"],[]],"abductores-en-maquina":[["abductores"],["gluteos"]],"aductores-en-maquina":[["aductores"],["gluteos","isquios"]],"gemelos-en-maquina":[["gemelos"],[]],"peso-muerto-rumano-con-mancuernas":[["isquios"],["gluteos","lumbar"]],"zancadas-con-mancuernas":[["cuadriceps"],["gemelos","gluteos","isquios"]],"press-de-pecho-en-maquina":[["pecho"],["hombros","triceps"]],"press-inclinado-en-maquina":[["pecho"],["hombros","triceps"]],"aperturas-en-maquina-pec-deck":[["pecho"],[]],"cruce-de-poleas":[["pecho"],["hombros"]],"press-con-mancuernas-en-banco":[["pecho"],["hombros","triceps"]],"jalon-al-pecho":[["dorsales"],["biceps","espaldaMedia","hombros"]],"jalon-agarre-estrecho":[["dorsales"],["biceps","espaldaMedia","hombros"]],"remo-sentado-en-polea":[["espaldaMedia"],["biceps","dorsales","hombros"]],"remo-en-maquina":[["dorsales"],["biceps","espaldaMedia"]],"pullover-en-polea":[["dorsales"],[]],"hiperextensiones":[["lumbar"],["gluteos","isquios"]],"press-de-hombros-en-maquina":[["hombros"],["triceps"]],"elevaciones-laterales-en-polea":[["hombros"],["espaldaMedia","trapecio"]],"elevaciones-laterales-con-mancuernas":[["hombros"],[]],"face-pull-en-polea":[["hombros"],["espaldaMedia"]],"pajaros-en-maquina":[["hombros"],[]],"curl-de-biceps-en-polea":[["biceps"],[]],"curl-de-biceps-en-maquina":[["biceps"],[]],"curl-martillo-con-mancuernas":[["biceps"],[]],"extension-de-triceps-en-polea":[["triceps"],[]],"extension-de-triceps-sobre-la-cabeza-en-polea":[["triceps"],[]],"fondos-en-maquina":[["triceps"],["hombros","pecho"]],"crunch-en-polea":[["abdomen"],[]],"plancha":[["abdomen"],[]],"elevacion-de-piernas":[["abdomen"],[]],"pallof-press-en-polea":[["abdomen"],["hombros","pecho","triceps"]],"sentadilla-en-maquina-smith":[["cuadriceps"],["gemelos","gluteos","isquios","lumbar"]],"sentadilla-goblet":[["cuadriceps"],["gemelos","gluteos","hombros","isquios"]],"sentadilla-con-barra":[["cuadriceps"],["gemelos","gluteos","isquios","lumbar"]],"hip-thrust-con-barra":[["gluteos"],["gemelos","isquios"]],"puente-de-gluteo-con-barra":[["gluteos"],["gemelos","isquios"]],"patada-de-gluteo-en-polea":[["gluteos"],["isquios"]],"peso-muerto-con-barra":[["lumbar"],["antebrazos","cuadriceps","dorsales","espaldaMedia","gemelos","gluteos","isquios","trapecio"]],"gemelos-sentado-en-maquina":[["gemelos"],[]],"sentadilla-split-con-mancuernas":[["cuadriceps"],["gluteos","isquios"]],"subidas-al-cajon-con-mancuernas":[["cuadriceps"],["gemelos","gluteos","isquios"]],"curl-femoral-de-pie":[["isquios"],[]],"press-de-banca-con-barra":[["pecho"],["hombros","triceps"]],"press-inclinado-con-mancuernas":[["pecho"],["hombros","triceps"]],"aperturas-con-mancuernas":[["pecho"],[]],"flexiones-de-brazos":[["pecho"],["hombros","triceps"]],"cruce-de-poleas-desde-abajo":[["pecho"],["hombros"]],"press-inclinado-en-smith":[["pecho"],["hombros","triceps"]],"dominadas":[["dorsales"],["biceps","espaldaMedia"]],"dominadas-asistidas":[["dorsales"],["abdomen","antebrazos","espaldaMedia"]],"remo-con-mancuerna-a-una-mano":[["espaldaMedia"],["biceps","dorsales","hombros"]],"remo-con-barra":[["espaldaMedia"],["biceps","dorsales","hombros"]],"jalon-con-agarre-supino":[["dorsales"],["biceps","espaldaMedia","hombros"]],"remo-en-t":[["espaldaMedia"],["biceps","dorsales"]],"encogimientos-con-mancuernas":[["trapecio"],[]],"press-de-hombros-con-mancuernas":[["hombros"],["triceps"]],"press-arnold":[["hombros"],["triceps"]],"elevaciones-frontales-con-mancuernas":[["hombros"],[]],"remo-al-menton-en-polea":[["trapecio"],["hombros"]],"pajaros-con-mancuernas":[["hombros"],[]],"curl-con-barra":[["biceps"],["antebrazos"]],"curl-alternado-con-mancuernas":[["biceps"],["antebrazos"]],"curl-predicador-con-barra":[["biceps"],[]],"curl-concentrado":[["biceps"],["antebrazos"]],"curl-martillo-en-polea-con-soga":[["biceps"],[]],"extension-de-triceps-con-soga":[["triceps"],[]],"press-frances-con-barra-z":[["triceps"],["antebrazos"]],"patada-de-triceps-con-mancuerna":[["triceps"],[]],"fondos-en-banco":[["triceps"],["hombros","pecho"]],"abdominales-crunch":[["abdomen"],[]],"rueda-abdominal":[["abdomen"],["hombros"]],"elevacion-de-piernas-colgado":[["abdomen"],[]],"giros-rusos":[["abdomen"],["lumbar"]],"plancha-lateral":[["abdomen"],["hombros"]],"bicicleta-abdominal":[["abdomen"],[]],"cinta-caminando":[["cuadriceps"],["gemelos","gluteos","isquios"]],"cinta-corriendo":[["cuadriceps"],["gemelos","gluteos","isquios"]],"bicicleta-fija":[["cuadriceps"],["gemelos","gluteos","isquios"]],"eliptico":[["cuadriceps"],["gemelos","gluteos","isquios"]],"remo-maquina-de-cardio":[["cuadriceps"],["biceps","espaldaMedia","gemelos","gluteos","isquios","lumbar"]]};
 const REG={pecho:'Pecho',hombros:'Hombros',trapecio:'Trapecio',dorsales:'Dorsales',espaldaMedia:'Espalda media',lumbar:'Lumbar',biceps:'Bíceps',triceps:'Tríceps',antebrazos:'Antebrazos',abdomen:'Abdomen',gluteos:'Glúteos',cuadriceps:'Cuádriceps',isquios:'Isquiotibiales',aductores:'Aductores',abductores:'Abductores',gemelos:'Gemelos'};
@@ -1084,6 +1145,17 @@ const A={
   newRoutine:()=>{const ids=Object.keys(S.config.routines);let id='R'+Date.now().toString(36);const n=ids.length+1;S.config.routines[id]={id,name:'Rutina '+n,short:'R'+n,color:PALETTE[n%PALETTE.length],ex:[]};markDirty('config');Sheet._keep=true;sheetEditor();setTimeout(()=>{$('#sheetBody').scrollTop=1e6},50)},
   delRoutine:a=>twoTap(a,'¿Eliminar?',()=>{const id=a.dataset.r;const used=Object.values(S.sessions).some(s=>s.routineId===id);if(used){toast('Tiene entrenos registrados: no se puede borrar');return}delete S.config.routines[id];for(const k in S.config.schedule)if(S.config.schedule[k]===id)delete S.config.schedule[k];for(const k in S.config.overrides)if(S.config.overrides[k]===id)delete S.config.overrides[k];markDirty('config');Sheet._keep=true;sheetEditor()}),
   programs:()=>sheetPrograms(),
+  nSex:a=>{UI.nSex=a.dataset.s;document.querySelectorAll('.nsex').forEach(b=>b.classList.toggle('pri',b===a))},
+  nEdit:()=>{UI.nutEdit=true;render()},
+  nCancel:()=>{UI.nutEdit=false;render()},
+  nSave:()=>{const P=S.config.profile=S.config.profile||{sex:'',age:'',height:'',act:1.55};const sex=UI.nSex||P.sex;const age=parseInt($('#nAge').value),hh=parseInt($('#nH').value),w=num($('#nW').value);
+    if(!sex){toast('Elegí hombre o mujer');return}if(!(age>=14&&age<=90)){toast('Revisá la edad');return}if(!(hh>=130&&hh<=220)){toast('Revisá la altura en cm');return}if(!(w>=35&&w<=250)){toast('Revisá el peso');return}
+    Object.assign(P,{sex,age,height:hh,act:+$('#nAct').value});const t=todayISO();const cur=bodyLatest('w');if(!cur||cur.v!==w){const e=S.body.entries[t]=S.body.entries[t]||{};e.w=w;markDirty('body')}
+    UI.nutEdit=false;UI.nSex=null;markDirty('config');render();toast('Objetivos calculados')},
+  food:a=>{const f=FOODS[+a.dataset.i];addFood(f[0],f[1])},
+  mealAdd:a=>addFood(a.dataset.n,+a.dataset.p),
+  foodCustom:()=>{const n=$('#fName').value.trim()||'Comida';const p=parseInt($('#fP').value);if(!(p>0&&p<300)){toast('Poné los gramos de proteína');return}addFood(n,p)},
+  foodDel:a=>{const t=todayISO();const e=S.body.entries[t];if(e&&e.food){e.food.splice(+a.dataset.x,1);markDirty('body');render()}},
   obGoal:a=>{S.config.goal=a.dataset.g;document.querySelectorAll('.ob-goal').forEach(b=>b.classList.toggle('pri',b===a))},
   obStart:()=>{const n=($('#obName').value||'').trim();if(!n){toast('Escribí tu nombre');return}S.config.name=n;S.config.onboarded=true;UI.progGoal=S.config.goal;markDirty('config');render();sheetPrograms()},
   progGoal:a=>{UI.progGoal=a.dataset.g;sheetPrograms()},
