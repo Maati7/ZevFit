@@ -760,7 +760,7 @@ function vSettings(){
   h+='</div>';
   const syncTxt=Store.mode==='cloud'?'Tus datos se guardan en tu cuenta de Claude y aparecen en cualquier dispositivo donde abras esta app.':Store.mode==='error'?'Hubo un error guardando en la nube. Igual quedan guardados en este dispositivo.':'Por ahora se guardan solo en este navegador. Hacé respaldos de vez en cuando.';
   h+=`<div class="card"><h3>Datos</h3><div class="row" style="margin:8px 0"><span class="dot ${Store.mode==='cloud'?'ok':Store.mode==='error'?'err':''}"></span><span class="small muted">${syncTxt}</span></div>
-  <div class="grid2" style="margin:10px 0 0"><button class="btn" data-a="exportData">Copiar respaldo</button><button class="btn" data-a="importData">Importar respaldo</button><button class="btn" data-a="demo">Datos de ejemplo</button><button class="btn danger" data-a="wipe">Borrar todo</button></div></div>`;
+  <div class="grid2" style="margin:10px 0 0"><button class="btn" data-a="exportData">Copiar respaldo</button><button class="btn" data-a="importData">Importar respaldo</button>${/github\.io$/.test(location.hostname)?'<button class="btn" data-a="saveFile" style="grid-column:1/-1">💾 Guardar respaldo como archivo</button>':''}<button class="btn" data-a="demo">Datos de ejemplo</button><button class="btn danger" data-a="wipe">Borrar todo</button></div></div>`;
   h+=`<div class="tiny muted" style="text-align:center;margin:18px 0">ZevFit · tu entrenamiento, tus datos</div>`;
   return h;
 }
@@ -1153,9 +1153,10 @@ const A={
   progUse:a=>twoTap(a,'Reemplaza tus rutinas · tocá otra vez',()=>{const p=PROGRAMS.find(x=>x.id===a.dataset.id);applyProgram(p);markDirty('config');UI.sel=todayISO();closeSheet();UI.view='routines';render();toast('Programa activado: '+p.name)}),
   demo:a=>twoTap(a,'Reemplaza tus datos · tocá otra vez',()=>{replaceState(makeDemo());toast('Datos de ejemplo cargados')}),
   wipe:a=>twoTap(a,'¿Borrar TODO?',()=>{replaceState(freshState());toast('Datos borrados')}),
-  exportData:async()=>{const txt=JSON.stringify({app:'zevfit',v:1,config:S.config,body:S.body,sessions:S.sessions});try{await navigator.clipboard.writeText(txt);toast('Respaldo copiado. Pegalo en Notas o un mail.')}catch(e){Sheet.kind='exp';openSheet('Respaldo',`<div class="small muted" style="margin:12px 0">Copiá este texto y guardalo:</div><textarea class="in" style="height:260px;font-size:11px" readonly>${esc(txt)}</textarea>`)}},
-  importData:()=>{Sheet.kind='imp';openSheet('Importar respaldo',`<div class="small muted" style="margin:12px 0">Pegá el texto del respaldo. Reemplaza los datos actuales.</div><textarea class="in" id="impTxt" style="height:220px;font-size:11px"></textarea>`,{foot:`<button class="btn grow" data-a="closeSheet">Cancelar</button><button class="btn pri grow" data-a="doImport">Importar</button>`})},
-  doImport:()=>{try{const o=JSON.parse($('#impTxt').value);if(!o.config||!o.sessions)throw 0;closeSheet();replaceState(normalize(o));toast('Respaldo importado')}catch(e){toast('Ese texto no es un respaldo válido')}}
+  exportData:async()=>{const txt=backupText();try{await navigator.clipboard.writeText(txt);toast('Respaldo copiado. Pegalo en Notas o un mail.')}catch(e){Sheet.kind='exp';openSheet('Respaldo',`<div class="small muted" style="margin:12px 0">Copiá este texto y guardalo:</div><textarea class="in" style="height:260px;font-size:11px" readonly>${esc(txt)}</textarea>`)}},
+  importData:()=>{Sheet.kind='imp';openSheet('Importar respaldo',`<div class="small muted" style="margin:12px 0">Pegá el texto del respaldo (empieza con <b>{</b>). Reemplaza los datos actuales.</div><textarea class="in" id="impTxt" data-i="impTxt" style="height:200px;font-size:11px" placeholder='{"app":"zevfit",...'></textarea><div id="impPrev" class="small" style="margin-top:8px"></div>${/github\.io$/.test(location.hostname)?`<div class="small muted" style="margin:14px 0 6px">¿Lo guardaste como archivo?</div><label class="btn wide" style="cursor:pointer">📂 Elegir archivo de respaldo<input type="file" id="impFile" accept=".json,application/json,text/plain" style="display:none"></label>`:''}`,{foot:`<button class="btn grow" data-a="closeSheet">Cancelar</button><button class="btn pri grow" data-a="doImport">Importar</button>`})},
+  doImport:()=>{const o=parseBackup($('#impTxt').value);if(!o){$('#impPrev').innerHTML='<span style="color:var(--rd)">No reconozco ese texto como respaldo. Fijate de copiarlo completo, desde la primera { hasta la última }.</span>';return}const n=Object.keys(o.sessions).length,b=Object.keys((o.body||{}).entries||{}).length;closeSheet();replaceState(normalize(o));toast(`Importado: ${n} entrenos y ${b} días de registros`)},
+  saveFile:async()=>{const txt=backupText();const name='zevfit-respaldo-'+todayISO()+'.json';try{const f=new File([txt],name,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Respaldo ZevFit'});return}}catch(e){if(e&&e.name==='AbortError')return}try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();a.remove();toast('Respaldo descargado')}catch(e){toast('No se pudo guardar el archivo')}},
 };
 function sheetLibWk(){Sheet.kind='lib';openSheet('Agregar ejercicio',`<input class="in" data-i="libq" placeholder="Buscar ejercicio…" style="margin-top:12px"><div id="libList"></div>`);renderLibList()}
 A.closeSheet=(function(orig){return ()=>{if(Sheet.kind==='alt'){const d=loadDraft();if(d){openWorkout(d.date);return}}if(Sheet.kind==='ex'&&Sheet.back==='prog'){Sheet.back=null;sheetProgram(Sheet.progId);return}if(Sheet.back==='wk'&&Sheet.kind==='ex'){Sheet.back=null;const d=loadDraft();if(d){openWorkout(d.date);return}}Sheet.back=null;if(Sheet.kind==='lib'&&UI.libPick==='__wk'){UI.libPick=null;Sheet._replaceOk=false;openWorkout(Wk.W.date);return}orig()}})(A.closeSheet);
@@ -1164,6 +1165,7 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(!a
 document.addEventListener('input',e=>{const el=e.target;const k=el.dataset.i;
   if(k==='wset'){const s=Wk.W.ex[+el.dataset.e].sets[+el.dataset.s];s[el.dataset.f]=el.value;saveDraft()}
   else if(k==='libq'){UI.libQ=el.value;renderLibList()}
+  else if(k==='impTxt'){previewImport()}
   else if(k==='codeTxt'){const o=decodeWeek(el.value);$('#codePrev').innerHTML=o?`<div class="small" style="margin:12px 0 0;color:var(--ac)">✓ ${esc(o.n)} · ${o.r.length} rutina${o.r.length>1?'s':''}</div>`+weekSummary(o):(el.value.trim()?'<div class="small" style="margin-top:10px;color:var(--rd)">Todavía no reconozco un código válido</div>':'')}
   else if(k==='rname'){S.config.routines[el.dataset.r].name=el.value||'Rutina';markDirty('config')}
   else if(k==='rshort'){S.config.routines[el.dataset.r].short=el.value.toUpperCase()||'R';markDirty('config')}
@@ -1177,8 +1179,18 @@ document.addEventListener('change',e=>{const el=e.target;
   if(el.dataset.c==='dayRoutine'){const d=UI.sel;if(el.value==='__plan')delete S.config.overrides[d];else S.config.overrides[d]=el.value;markDirty('config');render()}
 });
 
+/* ================= respaldo ================= */
+function backupText(){return JSON.stringify({app:'zevfit',v:1,config:S.config,body:S.body,sessions:S.sessions})}
+function parseBackup(t){
+  if(!t)return null;t=String(t).replace(/[\u201C\u201D\u201E\u201F\u2033\u00AB\u00BB]/g,'"').replace(/[\u2018\u2019\u201A\u201B\u2032]/g,"'").replace(/[\u200B-\u200D\uFEFF]/g,'');
+  const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<=a)return null;
+  try{const o=JSON.parse(t.slice(a,b+1));if(!o||!o.config||typeof o.sessions!=='object')return null;return o}catch(e){return null}
+}
+document.addEventListener('change',e=>{if(e.target.id!=='impFile')return;const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('#impTxt').value=r.result;previewImport()};r.readAsText(f)});
+function previewImport(){const el=$('#impPrev');if(!el)return;const v=$('#impTxt').value;const o=parseBackup(v);el.innerHTML=o?`<span style="color:var(--ac)">✓ Respaldo válido: ${Object.keys(o.sessions).length} entrenos, ${Object.keys((o.body||{}).entries||{}).length} días de registros${o.config.name?' · '+esc(o.config.name):''}</span>`:(v.trim()?'<span style="color:var(--rd)">Todavía no lo reconozco como respaldo</span>':'')}
+
 /* ================= actualizaciones ================= */
-const APP_VERSION='2026-11-22.2';
+const APP_VERSION='2026-11-22.3';
 let lastCheck=0;
 async function checkUpdate(force){
   if(!/github\.io$/.test(location.hostname))return;
