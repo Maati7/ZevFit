@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b0c0f">
 <title>ZevFit · Entrenamiento</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="ZevFit">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -32,7 +40,8 @@ h3{font-size:17px;margin:0;font-weight:700}
 /* header */
 header{position:sticky;top:0;z-index:20;background:rgba(11,12,15,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--bd)}
 header .wrap{display:flex;align-items:center;gap:10px;height:56px}
-.logo{width:32px;height:32px;border-radius:9px;background:var(--ac);display:grid;place-items:center;flex:none}
+.logo{width:38px;height:38px;border-radius:10px;background:#000;overflow:hidden;flex:none;box-shadow:0 0 0 1px rgba(200,241,53,.35)}
+.logo img{width:100%;height:100%;display:block}
 .brand{font-family:"Barlow Condensed";font-weight:800;font-size:22px;letter-spacing:1.5px}
 .vtitle{margin-left:auto;font-size:12px;color:var(--mu);text-transform:uppercase;letter-spacing:1.2px;display:flex;align-items:center;gap:7px}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--mu2)}
@@ -190,7 +199,7 @@ a{color:var(--bl)}
 </head>
 <body>
 <header><div class="wrap">
-  <div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.6" stroke-linecap="round"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/></svg></div>
+  <div class="logo"><img src="icons/logo-160.png" alt="ZevFit"></div>
   <div class="brand">ZevFit</div>
   <div class="vtitle"><span id="vt">Inicio</span><span class="dot" id="syncdot" title="Estado de guardado"></span></div>
 </div></header>
@@ -589,7 +598,7 @@ function kpi(c,ic,v,l,x=''){return `<div class="kpi" style="--c:${c}"><span clas
 function vHome(){
   const t=todayISO(),C=S.config,st=streakInfo();const rid=routineFor(t),R=rid&&C.routines[rid],tst=statusOf(t);const draft=loadDraft();
   let h=`<div style="margin-top:14px"><div class="muted small" style="text-transform:capitalize">${fmtLong(t)}</div><h1>Hola${C.name?', '+esc(C.name):''}</h1></div>`;
-  if(!C.name&&!C.onboarded&&!doneSessions().length)h+=`<div class="card" style="border-color:var(--ac)"><h2>Bienvenido a ZevFit 💪</h2><div class="small muted" style="margin:6px 0 4px">Contanos dos cosas y te armamos la rutina.</div><label class="f"><span>¿Cómo te llamás?</span><input class="in" id="obName" placeholder="Tu nombre"></label><div class="small" style="font-weight:600;color:var(--mu);margin-bottom:6px">¿Cuál es tu objetivo?</div><div class="grid2" style="margin:0">${Object.entries(GOALS).map(([k,g])=>`<button class="btn ob-goal ${C.goal===k?'pri':''}" data-a="obGoal" data-g="${k}">${g.label}</button>`).join('')}</div><button class="btn pri wide" style="margin-top:12px" data-a="obStart">Elegir mi rutina →</button></div>`;
+  if(!C.name&&!C.onboarded&&!doneSessions().length)h+=`<div class="card" style="border-color:var(--ac);text-align:left"><img src="icons/logo-360.jpg" alt="" style="width:120px;height:120px;border-radius:24px;display:block;margin:4px auto 12px;box-shadow:0 0 24px rgba(200,241,53,.25)"><h2 style="text-align:center">Bienvenido a ZevFit 💪</h2><div class="small muted" style="margin:6px 0 4px">Contanos dos cosas y te armamos la rutina.</div><label class="f"><span>¿Cómo te llamás?</span><input class="in" id="obName" placeholder="Tu nombre"></label><div class="small" style="font-weight:600;color:var(--mu);margin-bottom:6px">¿Cuál es tu objetivo?</div><div class="grid2" style="margin:0">${Object.entries(GOALS).map(([k,g])=>`<button class="btn ob-goal ${C.goal===k?'pri':''}" data-a="obGoal" data-g="${k}">${g.label}</button>`).join('')}</div><button class="btn pri wide" style="margin-top:12px" data-a="obStart">Elegir mi rutina →</button></div>`;
   if(draft)h+=`<div class="card resume" data-a="resume">▶ Tenés un entreno en curso (${esc((C.routines[draft.routineId]||{}).name||'')}) · tocá para seguir</div>`;
   h+=`<div class="card"><div class="streak"><div class="grow"><div class="big">${st.cur}</div><div class="small" style="font-weight:600">entrenos seguidos</div><div class="tiny muted" style="margin-top:2px">sin saltear días planificados</div><div style="margin-top:10px"><span class="chip">Récord: ${st.best}</span></div></div><div>${heatmap()}<div class="tiny muted" style="margin-top:6px;text-align:right">últimas 4 semanas</div></div></div></div>`;
   // hoy
