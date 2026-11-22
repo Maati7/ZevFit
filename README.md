@@ -14,4 +14,5 @@ App web de entrenamiento de un solo archivo (`index.html`), pensada para usar de
 Todo se guarda en el navegador (localStorage). Desde Ajustes → Datos se puede copiar e importar un respaldo.
 
 ## Créditos
+Siluetas del mapa muscular: [react-native-body-highlighter](https://github.com/HichamELBSI/react-native-body-highlighter) (MIT © 2022 ELABBASSI Hicham).
 Imágenes de ejercicios: [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (dominio público, Unlicense).
