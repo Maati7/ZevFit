@@ -1177,6 +1177,19 @@ document.addEventListener('change',e=>{const el=e.target;
   if(el.dataset.c==='dayRoutine'){const d=UI.sel;if(el.value==='__plan')delete S.config.overrides[d];else S.config.overrides[d]=el.value;markDirty('config');render()}
 });
 
+/* ================= actualizaciones ================= */
+const APP_VERSION='2026-11-22.2';
+let lastCheck=0;
+async function checkUpdate(force){
+  if(!/github\.io$/.test(location.hostname))return;
+  if(!force&&Date.now()-lastCheck<60000)return;lastCheck=Date.now();
+  try{const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_VERSION='([^']+)'/);
+    if(m&&m[1]!==APP_VERSION&&!document.getElementById('updBar')){const b=document.createElement('div');b.id='updBar';b.innerHTML='<span>✨ Hay una versión nueva de ZevFit</span><button class="btn sm pri" data-a="doUpdate">Actualizar</button>';b.style.cssText='position:fixed;left:12px;right:12px;top:66px;z-index:95;background:#1b1e25;border:1px solid var(--ac);border-radius:14px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:600;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.5)';document.body.appendChild(b)}}catch(e){}
+}
+A.doUpdate=()=>{saveLocal();location.replace(location.pathname+'?v='+Date.now())};
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});
+setTimeout(()=>checkUpdate(true),1500);
+
 /* ================= arranque ================= */
 loadLocal();setSync('local');render();initCloud();
 </script>
