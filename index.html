@@ -822,7 +822,7 @@ function sheetEditor(){
   for(const R of Object.values(C.routines)){
     b+=`<div class="card" style="border-left:3px solid ${R.color}"><div class="row"><input class="in grow" data-i="rname" data-r="${R.id}" value="${esc(R.name)}"><input class="in" style="width:70px;text-align:center" maxlength="4" data-i="rshort" data-r="${R.id}" value="${esc(R.short)}" title="Sigla del calendario"></div>
     <div class="row" style="margin:10px 0;gap:6px">${PALETTE.map(c=>`<button class="sw ${c===R.color?'on':''}" style="background:${c}" data-a="rcolor" data-r="${R.id}" data-c="${c}" aria-label="color"></button>`).join('')}</div>`;
-    R.ex.forEach((e,i)=>{const ex=exInfo(e.id);b+=`<div class="row" style="padding:8px 0;border-top:1px solid var(--bd);gap:6px"><span class="mdot" style="background:${MUSCLES[ex.muscle]}"></span><div class="grow small" style="font-weight:600">${esc(ex.name)}</div><input class="in" style="width:44px;padding:7px 4px;text-align:center" inputmode="numeric" data-i="esets" data-r="${R.id}" data-x="${i}" value="${e.sets}" title="Series"><span class="muted small">×</span><input class="in" style="width:48px;padding:7px 4px;text-align:center" inputmode="numeric" data-i="ereps" data-r="${R.id}" data-x="${i}" value="${e.reps}" title="${ex.time?'Segundos':'Reps'}"><button class="btn sm ghost" data-a="erep" data-r="${R.id}" data-x="${i}" style="color:var(--bl)" title="Reemplazar">⇄</button><button class="btn sm ghost" data-a="emove" data-r="${R.id}" data-x="${i}" data-d="-1">↑</button><button class="btn sm ghost" data-a="edel" data-r="${R.id}" data-x="${i}" style="color:var(--rd)">✕</button></div>`});
+    R.ex.forEach((e,i)=>{const ex=exInfo(e.id);const mm=MM[e.id];b+=`<div style="padding:10px 0 8px;border-top:1px solid var(--bd)"><div class="row" style="gap:10px;cursor:pointer" data-a="exInfo" data-id="${e.id}">${anim(e.id,'th')||`<span class="mdot" style="background:${MUSCLES[ex.muscle]}"></span>`}<div class="grow"><div class="small" style="font-weight:600">${esc(ex.name)}</div><div class="tiny muted">${mm&&mm[0].length?mm[0].map(k=>REG[k]).join(', '):ex.muscle} · ver técnica ›</div></div></div><div class="row" style="gap:6px;margin-top:8px;justify-content:flex-end"><span class="tiny muted" style="margin-right:auto">Series × ${ex.time?(ex.unit==='min'?'min':'seg'):'reps'}</span><input class="in" style="width:44px;padding:7px 4px;text-align:center" inputmode="numeric" data-i="esets" data-r="${R.id}" data-x="${i}" value="${e.sets}" title="Series"><span class="muted small">×</span><input class="in" style="width:48px;padding:7px 4px;text-align:center" inputmode="numeric" data-i="ereps" data-r="${R.id}" data-x="${i}" value="${e.reps}" title="${ex.time?'Segundos':'Reps'}"><button class="btn sm ghost" data-a="erep" data-r="${R.id}" data-x="${i}" style="color:var(--bl)" title="Reemplazar">⇄</button><button class="btn sm ghost" data-a="emove" data-r="${R.id}" data-x="${i}" data-d="-1">↑</button><button class="btn sm ghost" data-a="edel" data-r="${R.id}" data-x="${i}" style="color:var(--rd)">✕</button></div></div>`});
     b+=`<div class="row" style="margin-top:10px"><button class="btn sm grow" data-a="addEx" data-r="${R.id}">+ Agregar ejercicio</button><button class="btn sm danger" data-a="delRoutine" data-r="${R.id}">Eliminar rutina</button></div></div>`;
   }
   b+=`<button class="btn wide" data-a="newRoutine">+ Nueva rutina</button>`;
@@ -1124,7 +1124,7 @@ const A={
   restAdj:a=>{const d=+a.dataset.d;Rest.end=Math.max(Date.now()+1000,Rest.end+d*1000);Rest.total=Math.max(1,Rest.total+d);beep((Rest.end-Date.now())/1000);tickRest()},
   restStop:()=>stopRest(false),
   lib:()=>{UI.libPick=null;UI.libQ='';sheetLib()},
-  exInfo:a=>{const fromProg=Sheet.kind==='prog';sheetExInfo(a.dataset.id);if(fromProg)Sheet.back='prog'},
+  exInfo:a=>{const k=Sheet.kind;if(k==='editor')Sheet.edScroll=$('#sheetBody').scrollTop;sheetExInfo(a.dataset.id);if(k==='prog')Sheet.back='prog';if(k==='editor')Sheet.back='editor'},
   editor:()=>sheetEditor(),
   addEx:a=>{UI.libRep=null;UI.libPick=a.dataset.r;UI.libQ='';sheetLib()},
   pickEx:a=>{const id=a.dataset.id;const ex=exInfo(id);
@@ -1162,7 +1162,7 @@ const A={
   saveFile:async()=>{const txt=backupText();const name='zevfit-respaldo-'+todayISO()+'.json';try{const f=new File([txt],name,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Respaldo ZevFit'});return}}catch(e){if(e&&e.name==='AbortError')return}try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();a.remove();toast('Respaldo descargado')}catch(e){toast('No se pudo guardar el archivo')}},
 };
 function sheetLibWk(){Sheet.kind='lib';openSheet('Agregar ejercicio',`<input class="in" data-i="libq" placeholder="Buscar ejercicio…" style="margin-top:12px"><div id="libList"></div>`);renderLibList()}
-A.closeSheet=(function(orig){return ()=>{if(Sheet.kind==='alt'){const d=loadDraft();if(d){openWorkout(d.date);return}}if(Sheet.kind==='ex'&&Sheet.back==='prog'){Sheet.back=null;sheetProgram(Sheet.progId);return}if(Sheet.back==='wk'&&Sheet.kind==='ex'){Sheet.back=null;const d=loadDraft();if(d){openWorkout(d.date);return}}Sheet.back=null;if(Sheet.kind==='lib'&&UI.libPick==='__wk'){UI.libPick=null;Sheet._replaceOk=false;openWorkout(Wk.W.date);return}orig()}})(A.closeSheet);
+A.closeSheet=(function(orig){return ()=>{if(Sheet.kind==='ex'&&Sheet.back==='editor'){Sheet.back=null;sheetEditor();$('#sheetBody').scrollTop=Sheet.edScroll||0;return}if(Sheet.kind==='alt'){const d=loadDraft();if(d){openWorkout(d.date);return}}if(Sheet.kind==='ex'&&Sheet.back==='prog'){Sheet.back=null;sheetProgram(Sheet.progId);return}if(Sheet.back==='wk'&&Sheet.kind==='ex'){Sheet.back=null;const d=loadDraft();if(d){openWorkout(d.date);return}}Sheet.back=null;if(Sheet.kind==='lib'&&UI.libPick==='__wk'){UI.libPick=null;Sheet._replaceOk=false;openWorkout(Wk.W.date);return}orig()}})(A.closeSheet);
 
 document.addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(!a)return;const f=A[a.dataset.a];if(f){e.preventDefault();f(a,e)}});
 document.addEventListener('input',e=>{const el=e.target;const k=el.dataset.i;
@@ -1193,7 +1193,7 @@ document.addEventListener('change',e=>{if(e.target.id!=='impFile')return;const f
 function previewImport(){const el=$('#impPrev');if(!el)return;const v=$('#impTxt').value;const o=parseBackup(v);el.innerHTML=o?`<span style="color:var(--ac)">✓ Respaldo válido: ${Object.keys(o.sessions).length} entrenos, ${Object.keys((o.body||{}).entries||{}).length} días de registros${o.config.name?' · '+esc(o.config.name):''}</span>`:(v.trim()?'<span style="color:var(--rd)">Todavía no lo reconozco como respaldo</span>':'')}
 
 /* ================= actualizaciones ================= */
-const APP_VERSION='2026-11-22.4';
+const APP_VERSION='2026-11-23.1';
 let lastCheck=0;
 async function checkUpdate(force){
   if(!/github\.io$/.test(location.hostname))return;
