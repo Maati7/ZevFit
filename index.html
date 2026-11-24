@@ -602,9 +602,19 @@ const ICON={
 function render(){
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===UI.view));
   $('#vt').textContent={home:'Inicio',routines:'Rutinas',progress:'Progreso',nutrition:'Nutrición',settings:'Ajustes'}[UI.view];
-  const fn={home:vHome,routines:vRoutines,progress:vProgress,nutrition:vNutrition,settings:vSettings}[UI.view];
-  $('#app').innerHTML=fn();
+  const fn={home:vHome,routines:vRoutines,progress:vProgress,nutrition:vNutrition,settings:vSettings}[UI.view]||vHome;
+  try{$('#app').innerHTML=fn()}catch(e){console.error(e);$('#app').innerHTML=`<div class="card" style="margin-top:20px;text-align:center"><div style="font-size:36px">🛠️</div><h3 style="margin:6px 0">Algo no cargó bien</h3><div class="small muted" style="margin-bottom:12px">Tus datos están a salvo. Tocá Reparar para acomodar la app.</div><button class="btn pri wide" data-a="repair">Reparar</button><div class="tiny muted" style="margin-top:10px">${esc(String(e&&e.message||e)).slice(0,140)}</div></div>`}
 }
+function rescueBar(msg){if(document.getElementById('rescueBar'))return;const b=document.createElement('div');b.id='rescueBar';b.innerHTML='<span>⚠️ Algo se trabó</span><button class="btn sm pri" data-a="repair">Reparar</button>';b.style.cssText='position:fixed;left:12px;right:12px;top:calc(66px + env(safe-area-inset-top));z-index:99;background:#1b1e25;border:1px solid var(--or);border-radius:14px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:600;font-size:14px';document.body.appendChild(b);console.warn(msg)}
+function sanitize(){
+  try{const C=S.config;if(!/^\d{4}-\d{2}-\d{2}$/.test(C.startDate||''))C.startDate=todayISO();
+    for(const id in C.routines){const R=C.routines[id];if(!R||!Array.isArray(R.ex)){delete C.routines[id];continue}R.ex=R.ex.filter(e=>e&&e.id);for(const e of R.ex){e.sets=Math.max(1,Math.min(20,parseInt(e.sets)||3));e.reps=Math.max(1,parseInt(e.reps)||10)}}
+    for(const k in C.schedule)if(!C.routines[C.schedule[k]])delete C.schedule[k];
+    for(const d in S.sessions){const s=S.sessions[d];if(!s||typeof s.sets!=='object'||!s.sets){delete S.sessions[d];continue}for(const id in s.sets)if(!Array.isArray(s.sets[id])||!s.sets[id].length)delete s.sets[id]}
+    if(!S.body||typeof S.body.entries!=='object')S.body={entries:{}};
+  }catch(e){console.warn(e)}
+}
+function draftOk(d){return d&&typeof d==='object'&&/^\d{4}-\d{2}-\d{2}$/.test(d.date||'')&&Array.isArray(d.ex)&&d.ex.length&&d.ex.every(e=>e&&e.id&&Array.isArray(e.sets)&&e.sets.length)}
 
 function heatmap(){
   const t=todayISO();const start=addDays(mondayOf(t),-21);let h='<div class="heatlab">'+['L','M','M','J','V','S','D'].map(x=>`<span>${x}</span>`).join('')+'</div><div class="heat">';
@@ -1131,7 +1141,7 @@ function sheetImport(){
 
 /* ================= entreno ================= */
 const Wk={W:null,iv:null};
-function loadDraft(){try{const t=localStorage.getItem(LS_DRAFT);return t?JSON.parse(t):null}catch(e){return null}}
+function loadDraft(){try{const t=localStorage.getItem(LS_DRAFT);const d=t?JSON.parse(t):null;if(d&&!draftOk(d)){localStorage.removeItem(LS_DRAFT);return null}return d}catch(e){try{localStorage.removeItem(LS_DRAFT)}catch(_){}return null}}
 function saveDraft(){try{localStorage.setItem(LS_DRAFT,JSON.stringify(Wk.W))}catch(e){}}
 function clearDraft(){try{localStorage.removeItem(LS_DRAFT)}catch(e){}Wk.W=null}
 function openWorkout(date){
@@ -1154,7 +1164,7 @@ function openWorkout(date){
 }
 /* ================= entreno 2.0: vista Pulso + vista Panel ================= */
 function wkExDone(e){const w=e.sets.filter(s=>!s.warm);return w.length>0&&w.every(s=>s.done)}
-function wkCurSet(e){const W=Wk.W;if(W.sel!=null&&e.sets[W.sel])return W.sel;const i=e.sets.findIndex(s=>!s.done);return i<0?e.sets.length-1:i}
+function wkCurSet(e){const W=Wk.W;if(!e.sets.length)e.sets.push({w:'',r:e.target||10,done:false});if(W.sel!=null&&e.sets[W.sel])return W.sel;const i=e.sets.findIndex(s=>!s.done);return i<0?e.sets.length-1:i}
 function wkStats(){const W=Wk.W;let tot=0,dn=0;for(const e of W.ex)for(const s of e.sets)if(!s.warm){tot++;if(s.done)dn++}const vol=sessVol({sets:Object.fromEntries(W.ex.map(e=>[e.id,e.sets]))});return {tot,dn,vol,pct:tot?Math.round(dn/tot*100):0}}
 function prevBest(id,before){let b=0;for(const h of exHistory(id))if(h.date<before&&h.best>b)b=h.best;return b}
 function wkPRs(W){const out=[];for(const e of W.ex){const ex=exInfo(e.id);if(ex.time)continue;let b=0,top=null;for(const s of e.sets)if(s.done&&!s.warm){const v=e1(num(s.w),num(s.r));if(v>b){b=v;top=s}}const pb=prevBest(e.id,W.date);if(b>0&&pb>0&&b>pb+0.01)out.push({id:e.id,w:num(top.w),r:top.r,gain:r1(b-pb)})}return out}
@@ -1162,7 +1172,8 @@ function wkSuggest(e){const ex=exInfo(e.id);if(ex.time)return null;const last=la
   if(tgt&&last.every(x=>x.done&&num(x.r)>=tgt)){const inc=lw>=40?2.5:1.25;return {txt:`La vez pasada completaste ${last.length}×${tgt} con ${fmtN(lw)} kg: probá ${fmtN(lw+inc)} kg`,w:lw+inc}}
   return {txt:`La vez pasada: ${last.filter(x=>x.done).map(x=>`${fmtN(num(x.w))}×${x.r}`).join(' · ')}. Intentá sumar una repetición.`}}
 function wkStep(v,f,d,ex){const n=num(v)||0;if(f==='r')return Math.max(0,n+d*(ex.time&&ex.unit!=='min'?5:1));const st=ex.time?(ex.unit==='min'?1:1.25):(n>=20?2.5:1.25);return Math.max(0,r1(n+d*st))}
-function renderWk(){
+function renderWk(){try{renderWk2()}catch(e){console.error(e);const b=$('#wkBody');if(b)b.innerHTML=`<div class="card" style="margin-top:20px;text-align:center"><h3>No pude mostrar el entreno</h3><div class="small muted" style="margin:6px 0 12px">Podés seguir desde la vista lista o descartarlo. Tus entrenos guardados no se tocan.</div><button class="btn wide" data-a="wkListSafe">Ver en lista</button><button class="btn wide danger" style="margin-top:8px" data-a="repair">Descartar entreno en curso y reparar</button></div>`}}
+function renderWk2(){
   const W=Wk.W;if(!W)return;if(W.cur==null||!W.ex[W.cur]){const i=W.ex.findIndex(e=>!wkExDone(e));W.cur=i<0?0:i}
   if(!W.view)W.view='focus';const body=$('#sheetBody');const st=body.scrollTop;const S2=wkStats();
   let h=`<div class="row" style="gap:8px;margin:10px 0 0"><div style="flex:1;display:flex;gap:3px">${W.ex.map((e,i)=>{const w=e.sets.filter(s=>!s.warm);const f=w.length?w.filter(s=>s.done).length/w.length:0;return `<span style="flex:1;height:5px;border-radius:3px;background:${i===W.cur?'#3a4150':'#242832'};overflow:hidden"><i style="display:block;height:100%;width:${f*100}%;background:#c8f135"></i></span>`}).join('')}</div><span class="chip" id="wkTime">${W.edit?'editando':'0:00'}</span><span class="small" style="font-weight:700;color:var(--ac)">${S2.pct}%</span></div>`;
@@ -1387,20 +1398,25 @@ document.addEventListener('change',e=>{if(e.target.id!=='impFile')return;const f
 function previewImport(){const el=$('#impPrev');if(!el)return;const v=$('#impTxt').value;const o=parseBackup(v);el.innerHTML=o?`<span style="color:var(--ac)">✓ Respaldo válido: ${Object.keys(o.sessions).length} entrenos, ${Object.keys((o.body||{}).entries||{}).length} días de registros${o.config.name?' · '+esc(o.config.name):''}</span>`:(v.trim()?'<span style="color:var(--rd)">Todavía no lo reconozco como respaldo</span>':'')}
 
 /* ================= actualizaciones ================= */
-const APP_VERSION='2026-11-24.1';
+const APP_VERSION='2026-11-24.2';
 let lastCheck=0;
 async function checkUpdate(force){
   if(!/github\.io$/.test(location.hostname))return;
   if(!force&&Date.now()-lastCheck<60000)return;lastCheck=Date.now();
   try{const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'});const t=await r.text();const m=t.match(/const APP_VERSION='([^']+)'/);
+    let tried=null;try{tried=JSON.parse(sessionStorage.getItem('zf-upd')||'null')}catch(e){}
+    if(m&&m[1]!==APP_VERSION&&tried&&tried.v===m[1]&&Date.now()-tried.t<15*60000)return;
     if(m&&m[1]!==APP_VERSION&&!document.getElementById('updBar')){const b=document.createElement('div');b.id='updBar';b.innerHTML='<span>✨ Hay una versión nueva de ZevFit</span><button class="btn sm pri" data-a="doUpdate">Actualizar</button>';b.style.cssText='position:fixed;left:12px;right:12px;top:calc(66px + env(safe-area-inset-top));z-index:95;background:#1b1e25;border:1px solid var(--ac);border-radius:14px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:600;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.5)';document.body.appendChild(b)}}catch(e){}
 }
-A.doUpdate=()=>{saveLocal();location.replace(location.pathname+'?v='+Date.now())};
+A.doUpdate=async()=>{saveLocal();try{const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'reload'});const t=await r.text();const m=t.match(/const APP_VERSION='([^']+)'/);sessionStorage.setItem('zf-upd',JSON.stringify({v:m?m[1]:'',t:Date.now()}))}catch(e){}location.replace(location.pathname+'?v='+Date.now())};
+A.repair=()=>{try{clearDraft()}catch(e){}try{stopRest(false)}catch(e){}document.body.classList.remove('wk-open','resting');document.body.style.overflow='';try{$('#sheet').classList.add('hidden')}catch(e){}Sheet.kind=null;Sheet.back=null;UI.view='home';UI.sel=todayISO();UI.libPick=null;UI.libRep=null;sanitize();saveLocal();const rb=document.getElementById('rescueBar');if(rb)rb.remove();render();toast('App reparada. Tus datos siguen intactos.')};
+A.wkListSafe=()=>{if(Wk.W){Wk.W.view='list';Wk.W.sel=null;Wk.W.cur=0}renderWk()};
+window.addEventListener('error',e=>rescueBar(e.message));window.addEventListener('unhandledrejection',e=>rescueBar(String(e.reason)));
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});
 setTimeout(()=>checkUpdate(true),1500);
 
 /* ================= arranque ================= */
-loadLocal();setSync('local');render();initCloud();
+document.body.style.overflow='';loadLocal();sanitize();if(/[?&]reparar/.test(location.search)){try{localStorage.removeItem(LS_DRAFT)}catch(e){}}setSync('local');render();initCloud();
 </script>
 </body>
 </html>
