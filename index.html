@@ -225,8 +225,8 @@ body.resting #wkRestMini{display:flex}body.resting .vlbl,body.resting .flbl{disp
 <main class="wrap" id="app"></main>
 
 <nav><div class="wrap">
-  <button data-a="nav" data-v="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>Inicio</button>
-  <button data-a="nav" data-v="routines"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/></svg>Rutinas</button>
+  <button data-a="nav" data-v="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>Hoy</button>
+  <button data-a="nav" data-v="routines"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/></svg>Plan</button>
   <button data-a="nav" data-v="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>Progreso</button>
   <button data-a="nav" data-v="nutrition"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 2v8a2 2 0 0 0 2 2v10M11 2v8a2 2 0 0 1-2 2M9 2v6M17 22V2c-2 1-3 4-3 7s1 4 3 4"/></svg>Comida</button>
   <button data-a="nav" data-v="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Ajustes</button>
@@ -601,7 +601,7 @@ const ICON={
 /* ================= vistas ================= */
 function render(){
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===UI.view));
-  $('#vt').textContent={home:'Inicio',routines:'Rutinas',progress:'Progreso',nutrition:'Nutrición',settings:'Ajustes'}[UI.view];
+  $('#vt').textContent={home:'Hoy',routines:'Plan',progress:'Progreso',nutrition:'Nutrición',settings:'Ajustes'}[UI.view];
   const fn={home:vHome,routines:vRoutines,progress:vProgress,nutrition:vNutrition,settings:vSettings}[UI.view]||vHome;
   try{$('#app').innerHTML=fn()}catch(e){console.error(e);$('#app').innerHTML=`<div class="card" style="margin-top:20px;text-align:center"><div style="font-size:36px">🛠️</div><h3 style="margin:6px 0">Algo no cargó bien</h3><div class="small muted" style="margin-bottom:12px">Tus datos están a salvo. Tocá Reparar para acomodar la app.</div><button class="btn pri wide" data-a="repair">Reparar</button><div class="tiny muted" style="margin-top:10px">${esc(String(e&&e.message||e)).slice(0,140)}</div></div>`}
 }
@@ -639,8 +639,8 @@ function vHome(){
   // hero
   h+=`<div class="hero">`;
   if(tst==='done'){const s=S.sessions[t];h+=`<div class="tiny" style="letter-spacing:1.4px;font-weight:700;color:#c8f135">HOY · COMPLETADO ✓</div><div class="hero-t">${esc(R?R.name:'Entreno')}</div><div class="small" style="color:#b7bdc8">${s.dur?s.dur+' min · ':''}${fmtVol(sessVol(s))} de volumen</div><button class="btn wide" style="height:52px;margin-top:6px" data-a="summary" data-d="${t}">Ver resumen</button>`}
-  else if(R){const rs=routineStats(R);const lt=lastTimeText(rid,t);h+=`<div class="tiny" style="letter-spacing:1.4px;font-weight:700;color:#c8f135">HOY TOCA</div><div class="hero-t">${esc(R.name)}</div><div class="small" style="color:#b7bdc8;display:flex;gap:14px"><span>${rs.n} ejercicios</span><span>${rs.sets} series</span><span>~${rs.min} min</span></div>${lt?`<div class="small muted" style="line-height:1.5">${lt}</div>`:''}<button class="btn pri wide" style="height:58px;font-size:17px;border-radius:16px;margin-top:4px" data-a="openWk" data-d="${t}"><svg width="18" height="18" viewBox="0 0 24 24" fill="#111" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg> Comenzar entrenamiento</button>`}
-  else{const n=nextSession(t);h+=`<div class="tiny" style="letter-spacing:1.4px;font-weight:700;color:#8b92a0">HOY</div><div class="hero-t">Día de descanso</div><div class="small muted">${n?`Próximo: <b style="color:var(--tx);text-transform:capitalize">${DOWL[parse(n.d).getDay()]}</b> · ${esc(C.routines[n.r].name)}`:'No hay entrenos planificados. Elegí un programa en Rutinas.'}</div>${n?'':`<button class="btn wide" data-a="programs">Ver programas</button>`}`}
+  else if(R){const rs=routineStats(R);const lt=lastTimeText(rid,t);h+=`<div class="row between"><div class="tiny" style="letter-spacing:1.4px;font-weight:700;color:#c8f135">HOY TOCA</div><button class="btn sm ghost" style="padding:2px 6px;color:var(--mu)" data-a="changeToday">Cambiar ›</button></div><div class="hero-t">${esc(R.name)}</div><div class="small" style="color:#b7bdc8;display:flex;gap:14px"><span>${rs.n} ejercicios</span><span>${rs.sets} series</span><span>~${rs.min} min</span></div>${lt?`<div class="small muted" style="line-height:1.5">${lt}</div>`:''}<button class="btn pri wide" style="height:58px;font-size:17px;border-radius:16px;margin-top:4px" data-a="openWk" data-d="${t}"><svg width="18" height="18" viewBox="0 0 24 24" fill="#111" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg> Comenzar entrenamiento</button>`}
+  else{const n=nextSession(t);h+=`<div class="tiny" style="letter-spacing:1.4px;font-weight:700;color:#8b92a0">HOY</div><div class="hero-t">Día de descanso</div><div class="small muted">${n?`Próximo: <b style="color:var(--tx);text-transform:capitalize">${DOWL[parse(n.d).getDay()]}</b> · ${esc(C.routines[n.r].name)}`:'No hay entrenos planificados. Elegí un programa en Plan.'}</div>${n?`<button class="btn wide" data-a="changeToday">Quiero entrenar igual hoy</button>`:`<button class="btn wide" data-a="programs">Ver programas</button>`}`}
   h+=`</div>`;
   // récords
   const prs=recentPRs(4);
@@ -663,7 +663,7 @@ function vRoutines(){
   let h=`<div class="week"><button class="arr" data-a="wkShift" data-d="-7">‹</button><div class="days">`;
   for(let i=0;i<7;i++){const x=addDays(ws,i);const st=statusOf(x);h+=`<button class="wd ${x===d?'sel':''} ${x===t?'today':''}" data-a="selDay" data-d="${x}"><small>${DOWS[parse(x).getDay()]}</small><b>${parse(x).getDate()}</b><div class="sd ${st}"></div></button>`}
   h+=`</div><button class="arr" data-a="wkShift" data-d="7">›</button></div>`;
-  h+=`<h1>Mis rutinas</h1><div class="muted small">Planificá, entrená y seguí tu progreso</div>`;
+  h+=`<h1>Tu plan</h1><div class="muted small">Organizá tu semana, editá rutinas y elegí programas. Para entrenar, andá a <b style="color:var(--ac);cursor:pointer" data-a="nav" data-v="home">Hoy</b>.</div>`;
   h+=`<div class="tools"><button class="btn" data-a="programs"><span style="color:var(--pk)">${ICON.cal}</span>Programas</button><button class="btn" data-a="restSheet"><span style="color:var(--ac)">${ICON.timer}</span>Descanso</button><button class="btn" data-a="lib"><span style="color:var(--bl)">${ICON.book}</span>Biblioteca</button><button class="btn" data-a="editor"><span style="color:var(--or)">${ICON.edit}</span>Editar</button></div>`;
   // detalle del día
   const st=statusOf(d),rid=routineFor(d),R=rid&&C.routines[rid];const s=S.sessions[d];
@@ -683,7 +683,8 @@ function vRoutines(){
         h+=`<button class="exr" data-a="exInfo" data-id="${e.id}">${anim(e.id)}<div class="grow"><div class="n">${esc(ex.name)}</div><div class="row" style="gap:6px;margin-top:4px"><span class="pill">${e.sets} × ${e.reps}${ex.time?' '+ex.unit:''}</span>${last&&!ex.time?`<span class="tiny muted">Últ: ${fmtN(last.top)} kg · 1RM est. ${fmtN(last.best)} kg</span>`:''}</div></div><span class="muted">›</span></button>`}
       h+='</div>'}
     if(s&&s.status==='done')h+=`<div class="row" style="margin-top:12px"><button class="btn grow" data-a="openWk" data-d="${d}">Ver / editar registro</button><button class="btn danger" data-a="delSess" data-d="${d}">Borrar</button></div>`;
-    else if(d<=t)h+=`<button class="btn pri wide" style="margin-top:12px" data-a="openWk" data-d="${d}">${ICON.dumb} ${d===t?'Empezar entreno':'Registrar este entreno'}</button>`;
+    else if(d===t)h+=`<button class="btn pri wide" style="margin-top:12px" data-a="nav" data-v="home">${ICON.dumb} Es el entreno de hoy · empezalo en Hoy ›</button>`;
+    else if(d<t)h+=`<button class="btn wide" style="margin-top:12px" data-a="openWk" data-d="${d}">✎ ¿Lo hiciste y no lo cargaste? Registralo</button>`;
     else h+=`<div class="tiny muted" style="margin-top:12px;text-align:center">Lo vas a poder registrar ese día.</div>`;
   }else h+=`<div class="empty small">Día de descanso. Recuperar también es entrenar.</div>`;
   h+='</div>';
@@ -788,7 +789,7 @@ function vSettings(){
   <label class="f"><span>Sueño objetivo (h)</span><input class="in" inputmode="decimal" data-cfg="sleepGoal" value="${C.sleepGoal}"></label>
   <label class="f"><span>Descanso entre series (seg)</span><input class="in" inputmode="numeric" data-cfg="restSec" value="${C.restSec}"></label></div>
   <label class="f"><span>Empezar a contar entrenos perdidos desde</span><input class="in" type="date" data-cfg="startDate" value="${C.startDate}"></label></div>`;
-  h+=`<div class="card"><h3>Semana de entrenamiento</h3><div class="tiny muted" style="margin:4px 0 8px">Qué rutina toca cada día. Las rutinas se editan en Rutinas → Editar rutinas.</div>`;
+  h+=`<div class="card"><h3>Semana de entrenamiento</h3><div class="tiny muted" style="margin:4px 0 8px">Qué rutina toca cada día. Las rutinas se editan en Plan → Editar.</div>`;
   for(const dw of [1,2,3,4,5,6,0])h+=`<div class="sched"><b class="small">${DOWS[dw]}</b><select class="in" data-c="sched" data-dw="${dw}"><option value="">Descanso</option>${Object.values(C.routines).map(r=>`<option value="${r.id}" ${C.schedule[dw]===r.id?'selected':''}>${esc(r.name)}</option>`).join('')}</select></div>`;
   h+='</div>';
   const syncTxt=Store.mode==='cloud'?'Tus datos se guardan en tu cuenta de Claude y aparecen en cualquier dispositivo donde abras esta app.':Store.mode==='error'?'Hubo un error guardando en la nube. Igual quedan guardados en este dispositivo.':'Por ahora se guardan solo en este navegador. Hacé respaldos de vez en cuando.';
@@ -1131,7 +1132,7 @@ function weekSummary(o){
 }
 function sheetShare(){
   Sheet.kind='share';const code=encodeWeek();const o=decodeWeek(code);
-  const msg='Te paso mi rutina de ZevFit 💪 Abrí ZevFit → Rutinas → Programas → "Cargar código" y pegá esto:\n\n'+code;
+  const msg='Te paso mi rutina de ZevFit 💪 Abrí ZevFit → Plan → Programas → "Cargar código" y pegá esto:\n\n'+code;
   openSheet('Compartir mi semana',`<div class="small muted" style="margin:12px 0">Copiá el mensaje y mandáselo por WhatsApp. Tu amigo lo pega en su ZevFit y le quedan tus mismas rutinas y días.</div>${weekSummary(o)}<textarea class="in" id="shareTxt" readonly style="height:110px;font-size:11px;margin-top:6px">${esc(msg)}</textarea>`,{foot:'<button class="btn grow" data-a="programs">Volver</button><button class="btn pri grow" data-a="shareCopy">Copiar mensaje</button>'});
 }
 function sheetImport(){
@@ -1302,6 +1303,7 @@ const A={
   fdone:()=>fdone(),
   wkSug:a=>{const e=Wk.W.ex[Wk.W.cur];for(const x of e.sets)if(!x.done&&!x.warm)x.w=+a.dataset.w;saveDraft();renderWk();toast('Peso actualizado en las series pendientes')},
   summary:a=>sheetSummary(a.dataset.d),
+  changeToday:()=>{UI.view='routines';UI.sel=todayISO();UI.cal=UI.sel.slice(0,8)+'01';window.scrollTo(0,0);render();toast('Elegí la rutina de hoy en "Rutina del día"')},
   wkWarm:a=>{const e=Wk.W.ex[+a.dataset.e];Wk.W.sel=null;if(e.sets.some(x=>x.warm)){e.sets=e.sets.filter(x=>!x.warm)}else{const w=warmupFor(e);if(!w){toast('Primero cargá el peso de tu primera serie');return}e.sets=w.concat(e.sets);toast('Calentamiento agregado')}saveDraft();renderWk()},
   wkAlt:a=>sheetAlt(+a.dataset.e),
   altPick:a=>{const W=Wk.W;const ei=Sheet.altEi;const old=W.ex[ei];const nid=a.dataset.id;const nx=exInfo(nid);const n=old.sets.filter(x=>!x.warm).length||3;const last=lastSetsFor(nid,W.date);const tgt=old.target||10;
@@ -1398,7 +1400,7 @@ document.addEventListener('change',e=>{if(e.target.id!=='impFile')return;const f
 function previewImport(){const el=$('#impPrev');if(!el)return;const v=$('#impTxt').value;const o=parseBackup(v);el.innerHTML=o?`<span style="color:var(--ac)">✓ Respaldo válido: ${Object.keys(o.sessions).length} entrenos, ${Object.keys((o.body||{}).entries||{}).length} días de registros${o.config.name?' · '+esc(o.config.name):''}</span>`:(v.trim()?'<span style="color:var(--rd)">Todavía no lo reconozco como respaldo</span>':'')}
 
 /* ================= actualizaciones ================= */
-const APP_VERSION='2026-11-24.2';
+const APP_VERSION='2026-11-24.3';
 let lastCheck=0;
 async function checkUpdate(force){
   if(!/github\.io$/.test(location.hostname))return;
